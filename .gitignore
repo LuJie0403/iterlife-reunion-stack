@@ -1,0 +1,14 @@
+# runtime secrets
+webhook/*.env
+webhook/*.env.bak*
+
+# runtime logs
+*.log
+logs/
+
+# python cache
+__pycache__/
+*.pyc
+
+# system/mac noise
+.DS_Store
