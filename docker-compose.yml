@@ -38,7 +38,8 @@ services:
     restart: unless-stopped
     environment:
       - MEILI_NO_ANALYTICS=true
-      - MEILI_MASTER_KEY=f7b9f5a38ca183b1107eb375c5a7e9c90e5909a79f8f1fb7
+      # Read from host environment to avoid hardcoded secrets in repository.
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-CHANGE_ME}
     volumes:
       - /apps/data/iterlife-reunion/meili:/meili_data
     ports:
