@@ -1,0 +1,16 @@
+@layer iterlife-theme-tokens {
+  html[data-theme='dark-universe'] {
+    --iterlife-color-bg-base: #000000;
+    --iterlife-color-text-primary: #dde5ee;
+    --iterlife-color-text-muted: #8d9bac;
+    --iterlife-color-border-subtle: #1a1f2f;
+    --iterlife-color-panel: rgba(11, 18, 29, 0.96);
+    --iterlife-color-link: #8aa7da;
+    --iterlife-shadow-panel: 0 30px 58px rgba(0, 0, 0, 0.5);
+    --iterlife-bg-overlay-top: rgba(255, 255, 255, 0.08);
+    --iterlife-bg-overlay-bottom: rgba(255, 255, 255, 0.05);
+    --iterlife-bg-star-primary: rgba(252, 252, 255, 0.95);
+    --iterlife-bg-star-secondary: rgba(223, 236, 255, 0.62);
+    color-scheme: dark;
+  }
+}

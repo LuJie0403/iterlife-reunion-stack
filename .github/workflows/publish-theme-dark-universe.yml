@@ -1,0 +1,76 @@
+name: Publish Theme Dark Universe
+
+on:
+  pull_request:
+    paths:
+      - 'packages/themes/dark-universe/**'
+      - '.github/workflows/publish-theme-dark-universe.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/themes/dark-universe/**'
+      - '.github/workflows/publish-theme-dark-universe.yml'
+    tags:
+      - 'theme-dark-universe-v*'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/themes/dark-universe
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build package
+        run: npm run build
+      - name: Verify package metadata
+        run: |
+          node --input-type=module <<'EOF'
+          import fs from 'node:fs';
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const requiredExports = ['.', './index.css', './tokens.css', './background.css'];
+          if (pkg.name !== '@iterlife/theme-dark-universe') {
+            throw new Error(`Unexpected package name: ${pkg.name}`);
+          }
+          if (pkg.license !== 'Apache-2.0') {
+            throw new Error(`Unexpected license: ${pkg.license}`);
+          }
+          for (const key of requiredExports) {
+            if (!pkg.exports?.[key]) {
+              throw new Error(`Missing export: ${key}`);
+            }
+          }
+          EOF
+      - name: Verify dist files
+        run: |
+          test -f dist/index.css
+          test -f dist/tokens.css
+          test -f dist/background.css
+      - name: Verify npm publish contents
+        run: npm pack --dry-run
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/theme-dark-universe-v')
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: packages/themes/dark-universe
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+      - name: Build package
+        run: npm run build
+      - name: Publish package
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

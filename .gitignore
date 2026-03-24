@@ -12,3 +12,7 @@ __pycache__/
 
 # system/mac noise
 .DS_Store
+
+# node
+node_modules/
+*.tgz

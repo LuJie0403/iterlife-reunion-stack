@@ -7,6 +7,7 @@ IterLife 公共部署栈目录（阿里云单机）。
 - `scripts/deploy-all-apps-from-github.sh`：跨应用源码部署入口
 - `systemd/`：systemd 服务与 drop-in 备份
 - `docs/`：运维说明
+- `packages/themes/`：跨前端共享主题安装包
 
 安全约束：
 - 真实配置文件 `/apps/config/iterlife-reunion-stack/iterlife-deploy-webhook.env` 不入库
@@ -21,3 +22,4 @@ IterLife 公共部署栈目录（阿里云单机）。
 
 校验建议：
 - 变更路由配置后执行：`bash scripts/validate-webhook-config.sh webhook/iterlife-deploy-webhook.env.example`
+- 变更共享主题包后执行对应包目录下的构建与打包校验
