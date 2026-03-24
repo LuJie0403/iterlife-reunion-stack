@@ -3,6 +3,6 @@
   "private": true,
   "packageManager": "pnpm@10.8.0",
   "scripts": {
-    "theme:publish": "pnpm --filter @lujie0403/iterlife-theme publish --no-git-checks"
+    "theme:publish": "pnpm --filter @lujie0403/iterlife-theme-starfield publish --no-git-checks"
   }
 }

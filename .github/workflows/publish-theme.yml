@@ -32,6 +32,6 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Publish theme package
-        run: pnpm --filter @lujie0403/iterlife-theme publish --no-git-checks
+        run: pnpm --filter @lujie0403/iterlife-theme-starfield publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

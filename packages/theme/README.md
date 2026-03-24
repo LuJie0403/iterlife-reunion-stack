@@ -1,11 +1,11 @@
-# @lujie0403/iterlife-theme
+# @lujie0403/iterlife-theme-starfield
 
 Shared IterLife frontend theme assets.
 
 ## Install
 
 ```bash
-pnpm add @lujie0403/iterlife-theme
+pnpm add @lujie0403/iterlife-theme-starfield
 ```
 
 ## Usage
@@ -13,13 +13,13 @@ pnpm add @lujie0403/iterlife-theme
 Vite / Vue:
 
 ```ts
-import '@lujie0403/iterlife-theme/background.css'
+import '@lujie0403/iterlife-theme-starfield/background.css'
 ```
 
 Nuxt:
 
 ```ts
 export default defineNuxtConfig({
-  css: ['@lujie0403/iterlife-theme/background.css']
+  css: ['@lujie0403/iterlife-theme-starfield/background.css']
 })
 ```
