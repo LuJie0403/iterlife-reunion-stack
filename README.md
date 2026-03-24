@@ -1,11 +1,12 @@
 # iterlife-reunion-stack
 
-IterLife 公共部署栈目录（阿里云单机）。
+IterLife 公共平台资产仓（当前以部署栈与共享前端资产为主）。
 
 包含内容：
 - `webhook/iterlife-deploy-webhook-server.py`：统一部署回调服务
 - `scripts/deploy-all-apps-from-github.sh`：跨应用源码部署入口
 - `systemd/`：systemd 服务与 drop-in 备份
+- `packages/theme/`：前端共享主题包 `@lujie0403/iterlife-theme-starfield`
 - `docs/`：运维说明
 - `packages/themes/`：跨前端共享主题安装包
 
