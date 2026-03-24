@@ -1,0 +1,29 @@
+{
+  "name": "@iterlife/theme-dark-universe",
+  "version": "0.1.0",
+  "description": "IterLife shared dark universe theme foundation package.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": "./dist/index.css",
+    "./index.css": "./dist/index.css",
+    "./tokens.css": "./dist/tokens.css",
+    "./background.css": "./dist/background.css"
+  },
+  "style": "./dist/index.css",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "node ./scripts/build.mjs",
+    "prepublishOnly": "npm run build"
+  }
+}
