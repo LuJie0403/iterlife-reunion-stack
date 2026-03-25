@@ -29,11 +29,20 @@ except ImportError:
 from typing import Dict, Optional, Tuple
 
 
+ROOT_DIR = Path(__file__).resolve().parents[1]
 BIND_HOST = os.getenv("WEBHOOK_BIND_HOST", "127.0.0.1")
 BIND_PORT = int(os.getenv("WEBHOOK_BIND_PORT", "19091"))
 WEBHOOK_PATH = os.getenv("WEBHOOK_PATH", "/hooks/app-deploy")
 WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")
 DEPLOY_TIMEOUT_SECONDS = int(os.getenv("DEPLOY_TIMEOUT_SECONDS", "1800"))
+DEFAULT_DEPLOY_TARGETS_FILE = ROOT_DIR / "config" / "deploy-targets.json"
+DEFAULT_DEPLOY_EXECUTOR_SCRIPT = ROOT_DIR / "scripts" / "deploy-service-from-ghcr.sh"
+DEPLOY_TARGETS_FILE = Path(
+    os.getenv("DEPLOY_TARGETS_FILE", DEFAULT_DEPLOY_TARGETS_FILE.as_posix())
+).expanduser()
+DEPLOY_EXECUTOR_SCRIPT = Path(
+    os.getenv("DEPLOY_EXECUTOR_SCRIPT", DEFAULT_DEPLOY_EXECUTOR_SCRIPT.as_posix())
+).expanduser()
 LEGACY_LOG_FILE = os.getenv("WEBHOOK_LOG_FILE", "").strip()
 LOG_DIR = Path(
     os.getenv(
@@ -47,51 +56,59 @@ LOG_FILE_PREFIX = os.getenv(
     "WEBHOOK_LOG_FILE_PREFIX",
     Path(LEGACY_LOG_FILE).stem if LEGACY_LOG_FILE else "iterlife-deploy-webhook",
 ).strip() or "iterlife-deploy-webhook"
-LEGACY_DEPLOY_SCRIPT = os.getenv(
-    "DEPLOY_SCRIPT",
-    "/apps/iterlife-reunion/deploy/scripts/deploy-reunion-from-ghcr.sh",
-)
-DEPLOY_TARGETS_JSON = os.getenv("DEPLOY_TARGETS_JSON", "")
 
 
 def load_deploy_targets() -> Dict[str, Dict[str, str]]:
-    # Backward-compatible default route.
-    # Service without suffix means API deployment.
-    default_targets = {
-        "iterlife-reunion": {
-            "deploy_script": LEGACY_DEPLOY_SCRIPT,
-            "image_env": "API_IMAGE_REF",
-        }
-    }
-    if not DEPLOY_TARGETS_JSON.strip():
-        return default_targets
+    try:
+        raw_payload = DEPLOY_TARGETS_FILE.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise SystemExit(
+            f"DEPLOY_TARGETS_FILE cannot be read: {DEPLOY_TARGETS_FILE} ({exc})"
+        ) from exc
 
     try:
-        data = json.loads(DEPLOY_TARGETS_JSON)
+        data = json.loads(raw_payload)
     except json.JSONDecodeError as exc:
-        raise SystemExit(f"DEPLOY_TARGETS_JSON is invalid JSON: {exc}") from exc
+        raise SystemExit(
+            f"DEPLOY_TARGETS_FILE is invalid JSON: {DEPLOY_TARGETS_FILE} ({exc})"
+        ) from exc
 
     if not isinstance(data, dict) or not data:
-        raise SystemExit("DEPLOY_TARGETS_JSON must be a non-empty object")
+        raise SystemExit("DEPLOY_TARGETS_FILE must contain a non-empty object")
 
     normalized: Dict[str, Dict[str, str]] = {}
     for service_name, config in data.items():
         if not isinstance(service_name, str) or not service_name.strip():
-            raise SystemExit("DEPLOY_TARGETS_JSON contains invalid service name")
+            raise SystemExit("DEPLOY_TARGETS_FILE contains invalid service name")
         if not isinstance(config, dict):
             raise SystemExit(f"Service config must be object: {service_name}")
 
-        deploy_script = str(config.get("deploy_script", "")).strip()
-        image_env = str(config.get("image_env", "API_IMAGE_REF")).strip()
-        if not deploy_script:
-            raise SystemExit(f"deploy_script is required for service: {service_name}")
-        if not image_env:
-            raise SystemExit(f"image_env is required for service: {service_name}")
+        required_fields = [
+            "repo_dir",
+            "compose_file",
+            "compose_project_directory",
+            "compose_service",
+            "release_image_env",
+            "local_image_env",
+            "local_image_name",
+            "healthcheck_url",
+        ]
+        normalized_entry: Dict[str, str] = {}
+        for field_name in required_fields:
+            value = str(config.get(field_name, "")).strip()
+            if not value:
+                raise SystemExit(
+                    f"{field_name} is required for service: {service_name}"
+                )
+            normalized_entry[field_name] = value
 
-        normalized[service_name.strip()] = {
-            "deploy_script": deploy_script,
-            "image_env": image_env,
-        }
+        compose_no_deps = config.get("compose_no_deps", False)
+        if not isinstance(compose_no_deps, bool):
+            raise SystemExit(
+                f"compose_no_deps must be boolean for service: {service_name}"
+            )
+        normalized_entry["compose_no_deps"] = "true" if compose_no_deps else "false"
+        normalized[service_name.strip()] = normalized_entry
     return normalized
 
 
@@ -136,18 +153,7 @@ def resolve_service_key(service: str) -> str:
     service = service.strip()
     if not service:
         return ""
-    if service in DEPLOY_TARGETS:
-        return service
-    # Compatibility: payload may use "*-api", while route table key uses no suffix.
-    if service.endswith("-api"):
-        base = service[:-4]
-        if base in DEPLOY_TARGETS:
-            return base
-    # Compatibility: route table key may use "*-api", while payload uses no suffix.
-    api_key = service + "-api"
-    if api_key in DEPLOY_TARGETS:
-        return api_key
-    return ""
+    return service if service in DEPLOY_TARGETS else ""
 
 
 def validate_payload(payload: dict) -> Tuple[bool, str, str]:
@@ -170,9 +176,6 @@ def run_deploy(payload: dict, resolved_service: str) -> Tuple[int, str]:
     if target is None:
         return 1, f"unsupported service: {request_service}"
 
-    deploy_script = target["deploy_script"]
-    image_env_name = target["image_env"]
-
     image_ref = (payload.get("image_ref") or "").strip()
 
     dry_run = bool(payload.get("dry_run", False))
@@ -183,20 +186,23 @@ def run_deploy(payload: dict, resolved_service: str) -> Tuple[int, str]:
         return 0, f"[dry-run] accepted service={service} image_ref={image_ref}"
 
     env = os.environ.copy()
-    env[image_env_name] = image_ref
+    env[target["release_image_env"]] = image_ref
+    env[target["local_image_env"]] = target["local_image_name"]
     env["DEPLOY_TARGET_SERVICE"] = resolved_service
     env["DEPLOY_REQUEST_SERVICE"] = request_service
+    env["RELEASE_IMAGE_REF"] = image_ref
+    env["DEPLOY_TARGETS_FILE"] = DEPLOY_TARGETS_FILE.as_posix()
     if release_commit_sha:
         env["RELEASE_COMMIT_SHA"] = release_commit_sha
     if release_digest:
         env["RELEASE_IMAGE_DIGEST"] = release_digest
 
-    if not os.path.exists(deploy_script):
-        return 1, f"deploy script not found for service={service}: {deploy_script}"
+    if not DEPLOY_EXECUTOR_SCRIPT.exists():
+        return 1, f"deploy executor not found: {DEPLOY_EXECUTOR_SCRIPT}"
 
     start = time.time()
     proc = subprocess.run(
-        [deploy_script],
+        [DEPLOY_EXECUTOR_SCRIPT.as_posix()],
         env=env,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -207,7 +213,8 @@ def run_deploy(payload: dict, resolved_service: str) -> Tuple[int, str]:
     cost_ms = int((time.time() - start) * 1000)
     output = (proc.stdout or "") + (proc.stderr or "")
     summary = (
-        f"service={service} request_service={request_service} script={deploy_script} "
+        f"service={service} request_service={request_service} "
+        f"executor={DEPLOY_EXECUTOR_SCRIPT} "
         f"exit={proc.returncode} cost_ms={cost_ms}\n{output}"
     )
     return proc.returncode, summary
@@ -371,18 +378,26 @@ def main() -> None:
     if not WEBHOOK_SECRET:
         raise SystemExit("WEBHOOK_SECRET is required")
     startup_log_file = ensure_log_destination()
-    for service_name, target in DEPLOY_TARGETS.items():
-        script = target["deploy_script"]
-        if not os.path.exists(script):
-            raise SystemExit(f"deploy script not found for {service_name}: {script}")
-        if not os.access(script, os.X_OK):
-            raise SystemExit(f"deploy script is not executable for {service_name}: {script}")
+    if not DEPLOY_EXECUTOR_SCRIPT.exists():
+        raise SystemExit(f"deploy executor not found: {DEPLOY_EXECUTOR_SCRIPT}")
+    if not os.access(DEPLOY_EXECUTOR_SCRIPT, os.X_OK):
+        raise SystemExit(
+            f"deploy executor is not executable: {DEPLOY_EXECUTOR_SCRIPT}"
+        )
 
     httpd = ThreadingHTTPServer((BIND_HOST, BIND_PORT), DeployWebhookHandler)
     services = ",".join(sorted(DEPLOY_TARGETS.keys()))
     write_log(
-        "start webhook server at http://%s:%s%s services=%s log_file=%s"
-        % (BIND_HOST, BIND_PORT, WEBHOOK_PATH, services, startup_log_file)
+        "start webhook server at http://%s:%s%s services=%s log_file=%s deploy_targets_file=%s executor=%s"
+        % (
+            BIND_HOST,
+            BIND_PORT,
+            WEBHOOK_PATH,
+            services,
+            startup_log_file,
+            DEPLOY_TARGETS_FILE,
+            DEPLOY_EXECUTOR_SCRIPT,
+        )
     )
     httpd.serve_forever()
 

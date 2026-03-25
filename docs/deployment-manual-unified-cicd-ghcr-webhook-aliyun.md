@@ -1,184 +1,250 @@
-# IterLife 统一 CI/CD 部署手册（GHCR + Webhook + 阿里云）
+# IterLife 标准 CI/CD 手册（PR -> main -> GHCR -> Webhook -> Aliyun）
 
-最后更新：2026-03-10  
+最后更新：2026-03-25
+
 适用范围：
-- `iterlife-reunion`（backend）
-- `iterlife-reunion-ui`（frontend）
-- `iterlife-expenses`（backend）
-- `iterlife-expenses-ui`（frontend）
+- `iterlife-reunion-api`
+- `iterlife-reunion-ui`
+- `iterlife-expenses-api`
+- `iterlife-expenses-ui`
 - 后续新增子应用
 
-## 1. CI/CD 背景
+## 1. 目标
 
-在本项目早期，发布流程存在以下问题：
-- 服务器本机构建，发布耗时长且不可预测。
-- 多应用共用编排资源时，容易发生容器命名冲突。
-- 配置与代码耦合，存在敏感信息泄露风险。
-- 发布触发条件不统一，导致“代码合并后未自动发布”。
+IterLife 生产发布只保留一条标准链路：
 
-本手册目标是建立一条统一、可审计、可扩展的生产发布链路：
-- 开发在本地完成，合并 `main` 后自动触发发布。
-- 镜像在 GitHub Actions 构建并存储到 GHCR 私有仓库。
-- 阿里云通过一个统一 webhook 回调入口，根据参数路由到不同应用部署脚本。
+1. 本地分支开发
+2. 推送远端分支
+3. 发起到 `main` 的 PR
+4. 人工代码评审与审批
+5. 合并到 `main`
+6. GitHub Actions 构建并推送 GHCR 私有镜像
+7. GitHub Actions 回调阿里云统一 webhook
+8. webhook 按 `service` 路由部署
+9. 目标服务执行 `docker compose up -d --no-build`
+10. 健康检查与统一日志记录
 
-## 2. 设计总体方案
+除上述流程外，不再保留源码拉取后本机构建发布、手工触发 release workflow、兼容包装脚本长期保留等其他 CI/CD 路线。
 
-### 2.1 统一链路
+## 2. 仓库职责
 
-1. 本地分支开发并提交
-2. 推送分支并发起 PR
-3. PR 校验通过并合并到 `main`
-4. GitHub Actions 构建镜像并推送 GHCR
-5. GitHub Actions 发送签名回调到统一 webhook
-6. webhook 校验签名并按 `service` 路由部署脚本
-7. 目标脚本执行 `docker compose up -d --no-build`
-8. 执行健康检查并记录日志
+### 2.1 CI/CD 控制面仓库
 
-### 2.2 架构原则
+`iterlife-reunion-stack` 是唯一的 CI/CD 控制面仓库，统一负责：
+- webhook 服务
+- systemd 运行资产
+- 统一部署文档
+- 部署目标注册表
+- 通用部署执行器
+- GitHub Actions 可复用模板
 
-1. 配置与代码隔离：生产真实配置只存于 `/apps/config/...`
-2. 镜像集中托管：GHCR 私有仓库，生产机只拉镜像不构建
-3. 接口复用：一个 webhook 支持多个应用
-4. 安全优先：HMAC 验签 + 白名单路由 + HTTPS
-5. 兼容演进：支持 API 无后缀命名和 `*-api` 兼容映射
+### 2.2 可部署单元仓库
 
-## 3. 配置文件与配置方法
+业务仓库只负责各自应用的可部署单元资产：
+- 应用源码
+- Dockerfile
+- 单服务 compose 文件
+- PR 校验 workflow
+- 指向统一 release 模板的轻量 wrapper workflow
+- 应用特有运行时配置约束
 
-### 3.1 仓库内文件（可入库）
+业务仓库不再承担跨应用部署控制职责，也不再保留服务器 `git pull` 后源码构建发布的生产流程。
 
-1. `webhook/iterlife-deploy-webhook-server.py`  
-职责：统一 webhook 服务实现（验签、排队、路由、调用脚本）
+## 3. 命名规范
 
-2. `webhook/iterlife-deploy-webhook.env.example`  
-职责：配置模板（无真实密钥）
+为消除历史兼容逻辑，统一采用以下命名规则：
 
-3. `systemd/iterlife-app-deploy-webhook.service`  
-职责：systemd 主服务定义
+- API service key 必须使用 `-api` 后缀
+- UI service key 必须使用 `-ui` 后缀
+- GHCR 镜像名与 webhook `service` 字段保持一致
+- compose service 名与 webhook `service` 字段保持一致
+- 部署注册表 key 与 webhook `service` 字段保持一致
 
-4. `systemd/iterlife-app-deploy-webhook.service.d/10-log-perms.conf`  
-职责：日志目录与权限预处理
+标准示例：
+- `iterlife-reunion-api`
+- `iterlife-reunion-ui`
+- `iterlife-expenses-api`
+- `iterlife-expenses-ui`
 
-5. `scripts/validate-webhook-config.sh`  
-职责：校验 `DEPLOY_TARGETS_JSON` 结构和标准路由键
+不再保留“API 无后缀 service key”或 `*-api` / 无后缀自动映射兼容逻辑。
 
-### 3.2 服务器运行时配置（不入库）
+## 4. 标准链路分层
 
-1. `/apps/config/iterlife-reunion-stack/iterlife-deploy-webhook.env`
-2. `/apps/logs/webhook/iterlife-deploy-webhook.log`
+### 4.1 GitHub PR 校验层
 
-### 3.3 配置步骤
+- 只在 `pull_request -> main` 触发
+- 只做测试、编译、lint、typecheck、镜像构建验证等质量门禁
+- 不允许生产部署
 
-1. 拷贝模板：
+### 4.2 GitHub Release 层
 
-```bash
-cp /apps/iterlife-reunion-stack/webhook/iterlife-deploy-webhook.env.example \
-   /apps/config/iterlife-reunion-stack/iterlife-deploy-webhook.env
-```
+- 只在 `push -> main` 触发
+- 不保留 `workflow_dispatch`
+- 标准输出：
+  - `image_ref`
+  - `image_digest`
+  - `commit_sha`
+- 回调 payload 必填：
+  - `service`
+  - `environment`
+  - `repository`
+  - `commit_sha`
+  - `image_ref`
+  - `image_digest`
 
-2. 填写真实值（`WEBHOOK_SECRET`、`GHCR_USERNAME`、`GHCR_TOKEN` 等）。
+### 4.3 Webhook 控制层
 
-3. 校验配置：
+- 统一入口：`/hooks/app-deploy`
+- 统一 HMAC 签名校验
+- 统一按 `service` 路由
+- 同服务串行执行，队列只保留最新任务
+- 统一部署日志落盘
 
-```bash
-cd /apps/iterlife-reunion-stack
-bash scripts/validate-webhook-config.sh webhook/iterlife-deploy-webhook.env.example
-```
+### 4.4 部署执行层
 
-4. 重载服务：
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl restart iterlife-app-deploy-webhook.service
-sudo systemctl status iterlife-app-deploy-webhook.service
-```
-
-## 4. 自动化运行流程
-
-### 4.1 GitHub Actions 侧
-
-1. PR CI：仅做测试和构建校验，不做生产部署。
-2. Release Workflow（`main` push）：
-- 构建镜像并推送 GHCR
-- 生成 `image_ref`、`image_digest`
-- 用 `WEBHOOK_SECRET` 计算签名
-- 回调生产 webhook
-
-### 4.2 Webhook 侧
-
-1. 验签（`X-Hub-Signature-256`）
-2. 校验 payload（`service`、`image_ref` 必填）
-3. 路由服务键（支持 `-api` 与无后缀兼容）
-4. 同服务串行 + “保留最新”排队执行
-5. 设置镜像环境变量并调用目标脚本
-6. 写入统一日志
-
-### 4.3 部署脚本侧
-
-脚本在各应用仓库中维护，典型职责：
-- 登录 GHCR 并拉取目标镜像
-- 标记本地镜像标签
+部署执行只做镜像部署，不做源码构建：
+- 可选 `docker login`
+- `docker pull`
+- 本地 `docker tag`
 - `docker compose up -d --no-build`
 - 健康检查
-- 失败输出诊断日志
+- 失败时输出诊断日志
 
-## 5. 路由与命名规范
+## 5. 标准资产归属
 
-标准命名（推荐）：
-- API：`iterlife-reunion`、`iterlife-expenses`
-- UI：`iterlife-reunion-ui`、`iterlife-expenses-ui`
+### 5.1 `iterlife-reunion-stack` 必须保留
 
-兼容规则：
-- 回调传 `iterlife-xxx-api` 时，会尝试映射到无后缀键
+- `webhook/iterlife-deploy-webhook-server.py`
+- `webhook/iterlife-deploy-webhook.env.example`
+- `systemd/iterlife-app-deploy-webhook.service`
+- `systemd/iterlife-app-deploy-webhook.service.d/*`
+- `scripts/validate-webhook-config.sh`
+- `docs/deployment-manual-unified-cicd-ghcr-webhook-aliyun.md`
+- `docs/cicd-standardization-blueprint.md`
 
-`DEPLOY_TARGETS_JSON` 标准示例：
+### 5.2 `iterlife-reunion-stack` 应新增或收敛
 
-```env
-DEPLOY_TARGETS_JSON={"iterlife-reunion":{"deploy_script":"/apps/iterlife-reunion/deploy/scripts/deploy-reunion-from-ghcr.sh","image_env":"API_IMAGE_REF"},"iterlife-reunion-ui":{"deploy_script":"/apps/iterlife-reunion-ui/deploy/scripts/deploy-reunion-ui-from-ghcr.sh","image_env":"UI_IMAGE_REF"},"iterlife-expenses":{"deploy_script":"/apps/iterlife-expenses/deploy-expenses-api-from-ghcr.sh","image_env":"API_IMAGE_REF"},"iterlife-expenses-ui":{"deploy_script":"/apps/iterlife-expenses/deploy-expenses-ui-from-ghcr.sh","image_env":"UI_IMAGE_REF"}}
+- `config/deploy-targets.json`
+  - 版本化部署目标注册表
+  - 由仓库管理，不放进运行时私密 env
+- `scripts/deploy-service-from-ghcr.sh`
+  - 通用部署执行器
+- `.github/workflows/reusable-release-ghcr-webhook.yml`
+  - 可复用 release workflow 模板
+
+### 5.3 业务仓库必须保留
+
+- `Dockerfile`
+- `deploy/compose/<service>.yml`
+- `.github/workflows/<app>-pr-ci.yml`
+- `.github/workflows/<app>-release.yml`
+  - 最终应为调用统一 reusable workflow 的 wrapper
+- 应用 README / 差异化部署说明
+
+### 5.4 业务仓库不应再保留
+
+- 生产用源码部署脚本
+- 服务器 `git pull` 同步发布脚本
+- 跨仓库编排脚本
+- 与统一手册重复的完整 CI/CD 长文档
+- service key 兼容命名逻辑
+
+## 6. 部署注册表标准
+
+部署目标注册表是 webhook 路由和部署执行的唯一事实源，推荐结构如下：
+
+```json
+{
+  "iterlife-reunion-api": {
+    "repo_dir": "/apps/iterlife-reunion",
+    "compose_file": "/apps/iterlife-reunion/deploy/compose/reunion-api.yml",
+    "compose_project_directory": "/apps/iterlife-reunion",
+    "compose_service": "iterlife-reunion-api",
+    "release_image_env": "API_IMAGE_REF",
+    "local_image_env": "LOCAL_API_IMAGE_NAME",
+    "local_image_name": "iterlife-reunion-iterlife-reunion-api:latest",
+    "healthcheck_url": "http://127.0.0.1:18080/api/health",
+    "compose_no_deps": false
+  },
+  "iterlife-reunion-ui": {
+    "repo_dir": "/apps/iterlife-reunion-ui",
+    "compose_file": "/apps/iterlife-reunion-ui/deploy/compose/reunion-ui.yml",
+    "compose_project_directory": "/apps/iterlife-reunion-ui",
+    "compose_service": "iterlife-reunion-ui",
+    "release_image_env": "UI_IMAGE_REF",
+    "local_image_env": "LOCAL_UI_IMAGE_NAME",
+    "local_image_name": "iterlife-reunion-iterlife-reunion-ui:latest",
+    "healthcheck_url": "http://127.0.0.1:13080",
+    "compose_no_deps": true
+  }
+}
 ```
 
-## 6. 治理检查清单
+运行时 env 只保留私密和环境相关参数，例如：
+- `WEBHOOK_SECRET`
+- `GHCR_USERNAME`
+- `GHCR_TOKEN`
+- `DEPLOY_TIMEOUT_SECONDS`
+- `WEBHOOK_BIND_HOST`
+- `WEBHOOK_BIND_PORT`
 
-1. 目录纳入 Git 管理，且通过 PR 合并
-2. 无真实密钥入库（`env.example` 仅占位）
-3. 真实运行配置位于 `/apps/config/...`
-4. systemd `EnvironmentFile` 指向 `/apps/config/...`
-5. webhook 统一日志落盘到 `/apps/logs/webhook/...`
-6. webhook 入口统一为 `/hooks/app-deploy`
-7. 路由使用对象结构：`service -> {deploy_script, image_env}`
-8. 服务命名遵循“API 无后缀、UI 用 -ui”
+应用路由信息不应长期塞在运行时 env，而应放在版本化的 `config/deploy-targets.json` 中。
 
-## 7. 方案落地中的问题与解决方法
+## 7. 统一 workflow 模型
 
-1. 问题：`main` 合并后未触发发布  
-解决：修复 workflow 触发条件，避免 `paths` 过滤漏掉部署文件变更。
+最终每个业务仓库的 release workflow 只应传入这些差异项：
+- `service`
+- `image_name`
+- `docker_context`
+- `dockerfile`
+- `build_args`（可选）
 
-2. 问题：compose 工程名变化导致容器重名冲突  
-解决：统一 compose project naming 策略，并在部署脚本显式指定 project 目录。
+其它逻辑全部由统一模板提供：
+- GHCR 登录
+- buildx 初始化
+- 镜像 tag 规则
+- 输出 `image_ref` / `image_digest`
+- webhook 签名和回调
+- 生产环境 secrets 校验
 
-3. 问题：webhook 服务因日志权限问题重启  
-解决：添加 systemd drop-in `ExecStartPre`，启动前自动修正日志目录和文件权限。
+## 8. 治理约束
 
-4. 问题：`DEPLOY_TARGETS_JSON` 示例与实现不一致  
-解决：统一为对象结构，并增加 `scripts/validate-webhook-config.sh` 校验。
+- `main` 只允许通过 PR 合并
+- PR 必须通过人工 review / 审批
+- PR CI 必须是 required check
+- release workflow 只在 `main` merge 后自动触发
+- merge 和生产发布过程不应依赖服务器手工 git 操作
 
-5. 问题：运行配置放在仓库目录，存在泄漏风险  
-解决：迁移到 `/apps/config/iterlife-reunion-stack/`，仓库仅保留 `env.example`。
+## 9. 新增应用接入标准
 
-6. 问题：历史文档口径不一致（服务命名、路径、部署职责）  
-解决：收敛到本手册单一来源，其他仓库只做引用。
+新增应用时只允许按这套最小清单接入：
 
-## 8. 验收与回归
+1. 新建业务仓库，作为独立可部署单元
+2. 提供 Dockerfile
+3. 提供单服务 compose 文件
+4. 提供 PR CI workflow
+5. 提供 release wrapper workflow
+6. 在 `iterlife-reunion-stack` 部署注册表新增一项
+7. 在服务器 `/apps/config/<app>/` 放置运行时配置
+8. 回归验证 webhook、镜像拉取、compose 启动和健康检查
 
-1. `main` 合并后，目标仓库 Release Workflow 成功
-2. webhook 日志有对应 `service` 成功记录
-3. 目标服务健康检查通过
-4. 域名访问回归通过
-5. 四应用互不影响（并发发布无冲突）
+不允许新增“从 GitHub 拉源码后在服务器构建”的特殊流程。
 
-## 9. 子应用引用规范
+## 10. 立即清理方向
 
-各子应用仓库不复制完整 CI/CD 细节，仅引用本手册，并声明本应用差异项：
-- 镜像名
-- 路由 service 键
-- 部署脚本路径
-- 健康检查地址
+以下历史资产已经纳入清理目标并应保持不存在：
+- `iterlife-expenses/deploy-expenses-from-github.sh`
+- `iterlife-expenses/deploy-expenses-stack.sh`
+- `iterlife-reunion-stack/scripts/deploy-all-apps-from-github.sh`
+- 所有 release workflow 中的 `workflow_dispatch`
+- 所有“API 无后缀 service key”兼容逻辑
+- 所有仅为兼容旧调用保留的 GHCR 包装脚本
+
+## 11. 验收标准
+
+完成标准化后，应满足：
+- 任一应用的生产发布都只能通过 `PR -> main -> GHCR -> webhook -> compose` 完成
+- webhook 路由键、镜像名、compose service 名完全一致
+- 控制面资产只在 `iterlife-reunion-stack` 维护
+- 业务仓库不再保留源码部署生产链路
+- 新应用接入不需要复制整套 workflow 和 shell，只需填应用差异配置
