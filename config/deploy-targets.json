@@ -1,0 +1,46 @@
+{
+  "iterlife-expenses-api": {
+    "repo_dir": "/apps/iterlife-expenses",
+    "compose_file": "/apps/iterlife-expenses/deploy/compose/expenses-api.yml",
+    "compose_project_directory": "/apps/iterlife-expenses",
+    "compose_service": "iterlife-expenses-api",
+    "release_image_env": "API_IMAGE_REF",
+    "local_image_env": "LOCAL_API_IMAGE_NAME",
+    "local_image_name": "iterlife-expenses-api:local",
+    "healthcheck_url": "http://127.0.0.1:18180/api/health",
+    "compose_no_deps": false
+  },
+  "iterlife-expenses-ui": {
+    "repo_dir": "/apps/iterlife-expenses-ui",
+    "compose_file": "/apps/iterlife-expenses-ui/deploy/compose/expenses-ui.yml",
+    "compose_project_directory": "/apps/iterlife-expenses-ui",
+    "compose_service": "iterlife-expenses-ui",
+    "release_image_env": "UI_IMAGE_REF",
+    "local_image_env": "LOCAL_UI_IMAGE_NAME",
+    "local_image_name": "iterlife-expenses-ui:local",
+    "healthcheck_url": "http://127.0.0.1:13180",
+    "compose_no_deps": true
+  },
+  "iterlife-reunion-api": {
+    "repo_dir": "/apps/iterlife-reunion",
+    "compose_file": "/apps/iterlife-reunion/deploy/compose/reunion-api.yml",
+    "compose_project_directory": "/apps/iterlife-reunion",
+    "compose_service": "iterlife-reunion-api",
+    "release_image_env": "API_IMAGE_REF",
+    "local_image_env": "LOCAL_API_IMAGE_NAME",
+    "local_image_name": "iterlife-reunion-iterlife-reunion-api:latest",
+    "healthcheck_url": "http://127.0.0.1:18080/api/health",
+    "compose_no_deps": false
+  },
+  "iterlife-reunion-ui": {
+    "repo_dir": "/apps/iterlife-reunion-ui",
+    "compose_file": "/apps/iterlife-reunion-ui/deploy/compose/reunion-ui.yml",
+    "compose_project_directory": "/apps/iterlife-reunion-ui",
+    "compose_service": "iterlife-reunion-ui",
+    "release_image_env": "UI_IMAGE_REF",
+    "local_image_env": "LOCAL_UI_IMAGE_NAME",
+    "local_image_name": "iterlife-reunion-iterlife-reunion-ui:latest",
+    "healthcheck_url": "http://127.0.0.1:13080",
+    "compose_no_deps": true
+  }
+}
