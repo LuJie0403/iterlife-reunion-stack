@@ -197,7 +197,13 @@ cd /apps/iterlife-reunion-stack
 git switch main
 ```
 
+<<<<<<< HEAD
+相关 GitHub Actions secrets 清单见 `docs/github-actions-secrets-reference.md`。
+
+## 8. 治理约束
+=======
 ### 8.2 配置 webhook 运行时 env
+>>>>>>> main
 
 ```bash
 mkdir -p /apps/config/iterlife-reunion-stack
