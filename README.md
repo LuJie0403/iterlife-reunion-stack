@@ -1,34 +1,44 @@
 # iterlife-reunion-stack
 
-IterLife 公共平台资产仓（当前以部署栈与共享前端资产为主）。
+IterLife 控制面与共享前端资产仓。
 
-包含内容：
-- `webhook/iterlife-deploy-webhook-server.py`：统一部署回调服务
-- `systemd/`：systemd 服务与 drop-in 资产
-- `docs/`：CI/CD 与运维说明
-- `packages/themes/`：跨前端共享主题安装包
+## 当前职责
 
-CI/CD 角色定位：
-- 本仓库是 IterLife 唯一的 CI/CD 控制面仓库
-- 业务仓库是独立可部署单元，不再承担跨应用部署控制职责
-- 生产发布标准流程见 `docs/deployment-manual-unified-cicd-ghcr-webhook-aliyun.md`
-- 标准化清理与迁移蓝图见 `docs/cicd-standardization-blueprint.md`
-- GitHub Actions secrets 清单见 `docs/github-actions-secrets-reference.md`
+- 统一 webhook 部署控制面。
+- 部署目标注册表与通用部署脚本。
+- webhook 的 systemd 运行资产。
+- 跨前端共享主题包 `@iterlife/theme-dark-universe`。
+- 仓库级治理、运维和 secrets 文档。
 
-安全约束：
-- 真实配置文件 `/apps/config/iterlife-reunion-stack/iterlife-deploy-webhook.env` 不入库
-- 仅提交 `webhook/iterlife-deploy-webhook.env.example`
-- 不在仓库中存放任何真实 token/secret/password
+## 当前目录
 
-恢复流程（简版）：
-1. 拉取仓库到 `/apps/iterlife-reunion-stack`
-2. 用 `webhook/iterlife-deploy-webhook.env.example` 生成真实配置文件：`/apps/config/iterlife-reunion-stack/iterlife-deploy-webhook.env`
-3. 将 `systemd/iterlife-app-deploy-webhook.service*` 同步到 `/etc/systemd/system/`
-4. `sudo systemctl daemon-reload && sudo systemctl enable --now iterlife-app-deploy-webhook.service`
+```text
+.github/workflows/    GitHub Actions 工作流
+config/               部署目标注册表
+docs/                 治理、运维与共享包文档
+packages/themes/      前端共享主题包
+scripts/              通用部署与校验脚本
+systemd/              webhook 服务 unit 与 drop-in
+webhook/              webhook 服务源码与示例 env
+```
 
-校验建议：
-- 变更路由配置后执行：`bash scripts/validate-webhook-config.sh webhook/iterlife-deploy-webhook.env.example`
-- 变更共享主题包后执行对应包目录下的构建与打包校验
+## 文档入口
 
-说明：
-- 历史源码部署入口已从标准链路中移除，不再作为任何应用的生产发布方式
+- [docs/README.md](./docs/README.md)
+- [docs/directory-governance.md](./docs/directory-governance.md)
+- [docs/deployment-operations.md](./docs/deployment-operations.md)
+- [docs/frontend-theme-package.md](./docs/frontend-theme-package.md)
+- [docs/github-actions-secrets.md](./docs/github-actions-secrets.md)
+
+## 运行约束
+
+- 真实配置文件 `/apps/config/iterlife-reunion-stack/iterlife-deploy-webhook.env` 不入库。
+- 仓库只保留 `webhook/iterlife-deploy-webhook.env.example`。
+- 仓库内不存放任何真实 token、secret 或 password。
+
+## 常用校验
+
+```bash
+bash scripts/validate-webhook-config.sh webhook/iterlife-deploy-webhook.env.example
+cd packages/themes/dark-universe && npm run build
+```
