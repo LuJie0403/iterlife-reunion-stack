@@ -8,5 +8,5 @@
 
 ## 推荐阅读
 
-1. [部署差异说明](/Users/iter_1024/repository/iterlife-reunion-stack/docs/expenses-ui/deploy/deployment-cicd-reference.md)
-2. [统一部署与运维](/Users/iter_1024/repository/iterlife-reunion-stack/docs/unified-deployment-and-operations.md)
+1. [部署差异说明](/Users/iter_1024/repository/iterlife-stack/docs/expenses-ui/deploy/deployment-cicd-reference.md)
+2. [统一部署与运维](/Users/iter_1024/repository/iterlife-stack/docs/unified-deployment-and-operations.md)

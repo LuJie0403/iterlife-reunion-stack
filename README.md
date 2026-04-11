@@ -1,4 +1,4 @@
-# iterlife-reunion-stack
+# iterlife-stack
 
 IterLife 控制面、正式文档与共享前端资产仓。
 
@@ -66,7 +66,7 @@ webhook/              webhook 服务源码与示例 env
 
 ## 运行约束
 
-- 真实配置文件 `/apps/config/iterlife-reunion-stack/iterlife-deploy-webhook.env` 不入库。
+- 真实配置文件 `/apps/config/iterlife-stack/iterlife-deploy-webhook.env` 不入库。
 - 仓库只保留 `webhook/iterlife-deploy-webhook.env.example`。
 - 仓库内不存放任何真实 token、secret 或 password。
 

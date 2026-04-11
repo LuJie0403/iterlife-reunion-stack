@@ -10,6 +10,6 @@
 
 ## 推荐阅读
 
-1. [架构概览](/Users/iter_1024/repository/iterlife-reunion-stack/docs/expenses/architecture/architecture-overview.md)
-2. [部署差异说明](/Users/iter_1024/repository/iterlife-reunion-stack/docs/expenses/deploy/deployment-cicd-reference.md)
-3. [统一部署与运维](/Users/iter_1024/repository/iterlife-reunion-stack/docs/unified-deployment-and-operations.md)
+1. [架构概览](/Users/iter_1024/repository/iterlife-stack/docs/expenses/architecture/architecture-overview.md)
+2. [部署差异说明](/Users/iter_1024/repository/iterlife-stack/docs/expenses/deploy/deployment-cicd-reference.md)
+3. [统一部署与运维](/Users/iter_1024/repository/iterlife-stack/docs/unified-deployment-and-operations.md)

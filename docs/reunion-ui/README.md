@@ -9,6 +9,6 @@
 
 ## 推荐阅读
 
-1. [文章阅读渲染设计](/Users/iter_1024/repository/iterlife-reunion-stack/docs/reunion-ui/design/article-reader-rendering.md)
-2. [仓库治理规则](/Users/iter_1024/repository/iterlife-reunion-stack/docs/reunion-ui/governance/repository-governance.md)
-3. [统一部署与运维](/Users/iter_1024/repository/iterlife-reunion-stack/docs/unified-deployment-and-operations.md)
+1. [文章阅读渲染设计](/Users/iter_1024/repository/iterlife-stack/docs/reunion-ui/design/article-reader-rendering.md)
+2. [仓库治理规则](/Users/iter_1024/repository/iterlife-stack/docs/reunion-ui/governance/repository-governance.md)
+3. [统一部署与运维](/Users/iter_1024/repository/iterlife-stack/docs/unified-deployment-and-operations.md)

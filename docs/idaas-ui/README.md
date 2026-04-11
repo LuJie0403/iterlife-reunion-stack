@@ -9,5 +9,5 @@
 
 ## 推荐阅读
 
-1. [统一身份管理设计](/Users/iter_1024/repository/iterlife-reunion-stack/docs/reunion/design/unified-idaas.md)
-2. [统一部署与运维](/Users/iter_1024/repository/iterlife-reunion-stack/docs/unified-deployment-and-operations.md)
+1. [统一身份管理设计](/Users/iter_1024/repository/iterlife-stack/docs/reunion/design/unified-idaas.md)
+2. [统一部署与运维](/Users/iter_1024/repository/iterlife-stack/docs/unified-deployment-and-operations.md)

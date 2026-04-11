@@ -2,7 +2,7 @@
 
 最后更新：2026-03-26
 
-本文档描述 `iterlife-reunion-stack` 当前统一部署链路的真实结构、运行资产和日常操作方式。
+本文档描述 `iterlife-stack` 当前统一部署链路的真实结构、运行资产和日常操作方式。
 
 ## 1. 适用范围
 
@@ -83,8 +83,8 @@
 
 当前服务器运行时路径如下：
 
-- 控制面仓库：`/apps/iterlife-reunion-stack`
-- webhook 真实 env：`/apps/config/iterlife-reunion-stack/iterlife-deploy-webhook.env`
+- 控制面仓库：`/apps/iterlife-stack`
+- webhook 真实 env：`/apps/config/iterlife-stack/iterlife-deploy-webhook.env`
 - webhook 日志目录：`/apps/logs/webhook`
 - systemd unit：`/etc/systemd/system/iterlife-app-deploy-webhook.service`
 - systemd drop-in：`/etc/systemd/system/iterlife-app-deploy-webhook.service.d/`
@@ -96,7 +96,7 @@ Secrets 事实清单见 [github-actions-secrets-inventory.md](./github-actions-s
 当前链路中：
 
 - 业务仓库 release wrapper 必须提供 `ALIYUN_DEPLOY_WEBHOOK_URL` 和 `ALIYUN_DEPLOY_WEBHOOK_SECRET`。
-- `iterlife-reunion-stack` 自身用于 npm 发布的 secret 是 `GH_NPM_PACKAGES_PUBLISH_ACTION_TOKEN`。
+- `iterlife-stack` 自身用于 npm 发布的 secret 是 `GH_NPM_PACKAGES_PUBLISH_ACTION_TOKEN`。
 
 ## 9. 新服务器初始化
 
@@ -104,17 +104,17 @@ Secrets 事实清单见 [github-actions-secrets-inventory.md](./github-actions-s
 
 ```bash
 cd /apps
-git clone git@github.com:LuJie0403/iterlife-reunion-stack.git
-cd /apps/iterlife-reunion-stack
+git clone git@github.com:LuJie0403/iterlife-stack.git
+cd /apps/iterlife-stack
 git switch main
 ```
 
 ### 9.2 配置 webhook 环境文件
 
 ```bash
-mkdir -p /apps/config/iterlife-reunion-stack
+mkdir -p /apps/config/iterlife-stack
 cp webhook/iterlife-deploy-webhook.env.example \
-  /apps/config/iterlife-reunion-stack/iterlife-deploy-webhook.env
+  /apps/config/iterlife-stack/iterlife-deploy-webhook.env
 ```
 
 然后填写真实 secret 和运行参数。
@@ -135,9 +135,9 @@ sudo systemctl enable --now iterlife-app-deploy-webhook.service
 ### 9.4 启动前校验
 
 ```bash
-cd /apps/iterlife-reunion-stack
+cd /apps/iterlife-stack
 bash scripts/validate-webhook-config.sh \
-  /apps/config/iterlife-reunion-stack/iterlife-deploy-webhook.env
+  /apps/config/iterlife-stack/iterlife-deploy-webhook.env
 ```
 
 ## 10. 日常发布检查
@@ -197,7 +197,7 @@ sudo docker inspect --format 'table {{.Id}}\t{{.Name}}\t{{.State.Status}}\t{{.St
 ### 12.4 同步控制面代码
 
 ```bash
-cd /apps/iterlife-reunion-stack
+cd /apps/iterlife-stack
 git fetch origin
 git switch main
 git pull --ff-only origin main

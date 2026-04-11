@@ -11,8 +11,8 @@
 
 ## 推荐阅读
 
-1. [系统概览](/Users/iter_1024/repository/iterlife-reunion-stack/docs/reunion/design/system-overview.md)
-2. [文章发布流程](/Users/iter_1024/repository/iterlife-reunion-stack/docs/reunion/design/article-publish-flow.md)
-3. [统一身份管理设计](/Users/iter_1024/repository/iterlife-reunion-stack/docs/reunion/design/unified-idaas.md)
-4. [产品需求](/Users/iter_1024/repository/iterlife-reunion-stack/docs/reunion/product/product-requirements.md)
-5. [统一部署与运维](/Users/iter_1024/repository/iterlife-reunion-stack/docs/unified-deployment-and-operations.md)
+1. [系统概览](/Users/iter_1024/repository/iterlife-stack/docs/reunion/design/system-overview.md)
+2. [文章发布流程](/Users/iter_1024/repository/iterlife-stack/docs/reunion/design/article-publish-flow.md)
+3. [统一身份管理设计](/Users/iter_1024/repository/iterlife-stack/docs/reunion/design/unified-idaas.md)
+4. [产品需求](/Users/iter_1024/repository/iterlife-stack/docs/reunion/product/product-requirements.md)
+5. [统一部署与运维](/Users/iter_1024/repository/iterlife-stack/docs/unified-deployment-and-operations.md)

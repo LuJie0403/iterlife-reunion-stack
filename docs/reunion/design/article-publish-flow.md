@@ -38,8 +38,8 @@
 4. 为便于阅读和后续稳定性建设，当前已拆分为“主链路图”和“异步处理图”两张 PlantUML 图；二者都按“用户本地 / GitHub 侧 / IterLife Reunion 系统”明确执行归属。
 PlantUML 源文件已单独存放，便于 IDE 直接渲染与后续维护：
 
-- 主链路图：[article-publish-flow-main-sequence.puml](/Users/iter_1024/repository/iterlife-reunion-stack/docs/reunion/design/diagrams/article-publish-flow-main-sequence.puml)
-- 异步 / 补偿风险图：[article-publish-flow-async-risk-sequence.puml](/Users/iter_1024/repository/iterlife-reunion-stack/docs/reunion/design/diagrams/article-publish-flow-async-risk-sequence.puml)
+- 主链路图：[article-publish-flow-main-sequence.puml](/Users/iter_1024/repository/iterlife-stack/docs/reunion/design/diagrams/article-publish-flow-main-sequence.puml)
+- 异步 / 补偿风险图：[article-publish-flow-async-risk-sequence.puml](/Users/iter_1024/repository/iterlife-stack/docs/reunion/design/diagrams/article-publish-flow-async-risk-sequence.puml)
 
 稳定性风险、建设项与验收建议已合并到本文后续章节，不再单独拆分 checklist 文档。
 
@@ -830,8 +830,8 @@ title: Build a Reliable Publish Pipeline
 
 关联设计图：
 
-- 主链路图：[article-publish-flow-main-sequence.puml](/Users/iter_1024/repository/iterlife-reunion-stack/docs/reunion/design/diagrams/article-publish-flow-main-sequence.puml)
-- 异步 / 补偿风险图：[article-publish-flow-async-risk-sequence.puml](/Users/iter_1024/repository/iterlife-reunion-stack/docs/reunion/design/diagrams/article-publish-flow-async-risk-sequence.puml)
+- 主链路图：[article-publish-flow-main-sequence.puml](/Users/iter_1024/repository/iterlife-stack/docs/reunion/design/diagrams/article-publish-flow-main-sequence.puml)
+- 异步 / 补偿风险图：[article-publish-flow-async-risk-sequence.puml](/Users/iter_1024/repository/iterlife-stack/docs/reunion/design/diagrams/article-publish-flow-async-risk-sequence.puml)
 
 ### 12.2 当前总体判断
 

@@ -1,25 +1,25 @@
 # IterLife 文档总入口
 
-`iterlife-reunion-stack/docs/` 是 IterLife 体系的正式非代码文档事实源。
+`iterlife-stack/docs/` 是 IterLife 体系的正式非代码文档事实源。
 
 ## 应用文档
 
-- [Reunion](/Users/iter_1024/repository/iterlife-reunion-stack/docs/reunion/README.md)
-- [Reunion UI](/Users/iter_1024/repository/iterlife-reunion-stack/docs/reunion-ui/README.md)
-- [花多少（Expenses）](/Users/iter_1024/repository/iterlife-reunion-stack/docs/expenses/README.md)
-- [花多少 UI（Expenses UI）](/Users/iter_1024/repository/iterlife-reunion-stack/docs/expenses-ui/README.md)
-- [IDaaS](/Users/iter_1024/repository/iterlife-reunion-stack/docs/idaas/README.md)
-- [IDaaS UI](/Users/iter_1024/repository/iterlife-reunion-stack/docs/idaas-ui/README.md)
+- [Reunion](/Users/iter_1024/repository/iterlife-stack/docs/reunion/README.md)
+- [Reunion UI](/Users/iter_1024/repository/iterlife-stack/docs/reunion-ui/README.md)
+- [花多少（Expenses）](/Users/iter_1024/repository/iterlife-stack/docs/expenses/README.md)
+- [花多少 UI（Expenses UI）](/Users/iter_1024/repository/iterlife-stack/docs/expenses-ui/README.md)
+- [IDaaS](/Users/iter_1024/repository/iterlife-stack/docs/idaas/README.md)
+- [IDaaS UI](/Users/iter_1024/repository/iterlife-stack/docs/idaas-ui/README.md)
 
 ## 平台文档
 
-- [仓库目录治理方案](/Users/iter_1024/repository/iterlife-reunion-stack/docs/repository-directory-governance.md)
-- [版本矩阵与版本台账](/Users/iter_1024/repository/iterlife-reunion-stack/docs/version-matrix.md)
-- [统一部署与运维](/Users/iter_1024/repository/iterlife-reunion-stack/docs/unified-deployment-and-operations.md)
-- [GitHub Actions Secrets 清单](/Users/iter_1024/repository/iterlife-reunion-stack/docs/github-actions-secrets-inventory.md)
-- [阿里云服务器治理审计](/Users/iter_1024/repository/iterlife-reunion-stack/docs/server-governance-audit-20260323.md)
-- [Dark Universe Theme 包说明](/Users/iter_1024/repository/iterlife-reunion-stack/docs/dark-universe-theme-package.md)
-- [Vue Copy Action 包说明](/Users/iter_1024/repository/iterlife-reunion-stack/docs/vue-copy-action-package.md)
+- [仓库目录治理方案](/Users/iter_1024/repository/iterlife-stack/docs/repository-directory-governance.md)
+- [版本矩阵与版本台账](/Users/iter_1024/repository/iterlife-stack/docs/version-matrix.md)
+- [统一部署与运维](/Users/iter_1024/repository/iterlife-stack/docs/unified-deployment-and-operations.md)
+- [GitHub Actions Secrets 清单](/Users/iter_1024/repository/iterlife-stack/docs/github-actions-secrets-inventory.md)
+- [阿里云服务器治理审计](/Users/iter_1024/repository/iterlife-stack/docs/server-governance-audit-20260323.md)
+- [Dark Universe Theme 包说明](/Users/iter_1024/repository/iterlife-stack/docs/dark-universe-theme-package.md)
+- [Vue Copy Action 包说明](/Users/iter_1024/repository/iterlife-stack/docs/vue-copy-action-package.md)
 
 ## 当前规则
 

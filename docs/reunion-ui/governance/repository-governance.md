@@ -275,7 +275,7 @@
 
 ### 8.2 放置规则
 
-- CI/CD 与部署参考资料统一收口到 `iterlife-reunion-stack/docs/`
+- CI/CD 与部署参考资料统一收口到 `iterlife-stack/docs/`
 - 仓库治理与结构规则放在 `docs/governance/`
 - 运行时需要直出的静态资源放在 `public/`
 - 受版本控制的内容配置放在 `config/`

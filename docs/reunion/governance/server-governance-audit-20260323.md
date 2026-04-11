@@ -388,7 +388,7 @@ These are active runtime or runtime-adjacent paths and should not be treated as 
 - `/apps/iterlife-reunion-ui`
 - `/apps/iterlife-expenses`
 - `/apps/iterlife-expenses-ui`
-- `/apps/iterlife-reunion-stack`
+- `/apps/iterlife-stack`
 - `/home/iterlife-reunion/.ssh`
 - `/home/iterlife-reunion/.docker`
 
@@ -570,7 +570,7 @@ The runtime root remains `/apps`, and its current top-level layout is:
 - `/apps/static`
 - `/apps/iterlife-reunion`
 - `/apps/iterlife-reunion-ui`
-- `/apps/iterlife-reunion-stack`
+- `/apps/iterlife-stack`
 - `/apps/iterlife-expenses`
 - `/apps/iterlife-expenses-ui`
 
@@ -621,7 +621,7 @@ Current dirty production repositories still observed:
 Current clean production repositories observed:
 
 1. `/apps/iterlife-reunion-ui`
-2. `/apps/iterlife-reunion-stack`
+2. `/apps/iterlife-stack`
 3. `/apps/iterlife-expenses`
 
 Governance meaning:
@@ -1111,9 +1111,9 @@ This confirms the BT panel surface is still an active host-management subsystem,
    - Dirty files:
      - `deploy/compose/expenses-ui.yml`
 
-5. `/apps/iterlife-reunion-stack`
+5. `/apps/iterlife-stack`
    - Owner: `iterlife-reunion:iterlife-reunion`
-   - Remote: `git@github.com:LuJie0403/iterlife-reunion-stack.git`
+   - Remote: `git@github.com:LuJie0403/iterlife-stack.git`
    - Branch: `main`
    - HEAD: `61fdffa651f04d26194eaa2c3a77d0f6858e7b3b`
    - Dirty files:
@@ -1168,7 +1168,7 @@ Observed top-level entries include:
 - `/apps/iterlife-reunion-ui`
 - `/apps/iterlife-expenses`
 - `/apps/iterlife-expenses-ui`
-- `/apps/iterlife-reunion-stack`
+- `/apps/iterlife-stack`
 - `/apps/config`
 - `/apps/data`
 - `/apps/logs`
@@ -1276,7 +1276,7 @@ The host-level traffic path appears healthy.
    - `/apps/iterlife-reunion-ui`
    - `/apps/iterlife-expenses`
    - `/apps/iterlife-expenses-ui`
-   - `/apps/iterlife-reunion-stack`
+   - `/apps/iterlife-stack`
 
 2. Production drift is already present.
    - `/apps/iterlife-reunion` has local modifications

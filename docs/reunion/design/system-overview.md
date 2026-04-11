@@ -28,8 +28,8 @@
 
 * **服务器**：阿里云 ECS。
 * **容器化**：`deploy/compose/reunion-api.yml` 编排 `iterlife-reunion-api` 与 `iterlife-reunion-meili`。
-* **持续集成 / 发布**：本地开发 -> PR -> 合并 `main` -> GitHub Actions 构建 GHCR 镜像 -> 统一 webhook 回调 -> `iterlife-reunion-stack` 控制面按 `iterlife-reunion-api` 执行 `docker compose up -d --no-build`。
-* **统一路由与 webhook**：由 `iterlife-reunion-stack` 仓库维护。
+* **持续集成 / 发布**：本地开发 -> PR -> 合并 `main` -> GitHub Actions 构建 GHCR 镜像 -> 统一 webhook 回调 -> `iterlife-stack` 控制面按 `iterlife-reunion-api` 执行 `docker compose up -d --no-build`。
+* **统一路由与 webhook**：由 `iterlife-stack` 仓库维护。
 * **网关与证书**：Nginx + HTTPS 证书，运行时配置外置于 `/apps/config/...`。
 
 ## 2. 核心架构设计 (Core Domain Design)
@@ -154,4 +154,4 @@
 
 * 前端 UI 视觉、阅读器形态、侧边栏配置等以 `iterlife-reunion-ui` 为准。
 * 身份模型重构仍属于设计态，不应被误读为已在本仓库代码中落地。
-* 统一 webhook/systemd/多应用部署编排以 `iterlife-reunion-stack` 仓库文档为准。
+* 统一 webhook/systemd/多应用部署编排以 `iterlife-stack` 仓库文档为准。
