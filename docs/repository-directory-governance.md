@@ -91,6 +91,7 @@
 
 - `README.md` 负责文档总入口。
 - `repository-directory-governance.md` 负责目录结构与治理规则。
+- `version-matrix.md` 负责版本矩阵、版本台账和统一版本治理规则。
 - `unified-deployment-and-operations.md` 负责部署与运维事实。
 - `dark-universe-theme-package.md` 负责共享主题包事实。
 - `vue-copy-action-package.md` 负责共享复制按钮包事实。
@@ -107,6 +108,7 @@
 ### 6.3 文档更新触发器
 
 - 调整目录边界或新增目录时，更新本文件。
+- 调整应用版本号、正式 tag 或版本治理规则时，更新 `version-matrix.md`。
 - 调整应用设计、产品、架构、部署差异文档时，更新对应的 `docs/<app>/` 目录。
 - 调整部署流程、服务矩阵、运维命令时，更新 `unified-deployment-and-operations.md`。
 - 调整共享主题包目录、发布方式、消费方式时，更新 `dark-universe-theme-package.md`。

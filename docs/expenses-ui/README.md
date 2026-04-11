@@ -1,4 +1,4 @@
-# 花多少 UI 文档
+# 花多少 UI（Expenses UI）文档
 
 本目录收口 `iterlife-expenses-ui` 的正式非代码文档。
 

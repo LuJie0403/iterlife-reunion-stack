@@ -28,6 +28,7 @@ webhook/              webhook 服务源码与示例 env
 
 - [docs/repository-directory-governance.md](./docs/repository-directory-governance.md)
 - [docs/README.md](./docs/README.md)
+- [docs/version-matrix.md](./docs/version-matrix.md)
 - [docs/unified-deployment-and-operations.md](./docs/unified-deployment-and-operations.md)
 - [docs/dark-universe-theme-package.md](./docs/dark-universe-theme-package.md)
 - [docs/vue-copy-action-package.md](./docs/vue-copy-action-package.md)
@@ -38,6 +39,7 @@ webhook/              webhook 服务源码与示例 env
 
 - [docs/README.md](./docs/README.md)：所有应用与平台文档的总入口。
 - [docs/repository-directory-governance.md](./docs/repository-directory-governance.md)：仓库顶层目录、目录边界、准入规则和持续治理计划。
+- [docs/version-matrix.md](./docs/version-matrix.md)：当前应用版本矩阵、版本台账和统一版本治理规则。
 - [docs/unified-deployment-and-operations.md](./docs/unified-deployment-and-operations.md)：统一 GHCR + webhook 部署链路、服务器初始化、发布检查、回滚与排障。
 - [docs/dark-universe-theme-package.md](./docs/dark-universe-theme-package.md)：`@iterlife/theme-dark-universe` 的目录、边界、发布和消费方式。
 - [docs/vue-copy-action-package.md](./docs/vue-copy-action-package.md)：`@iterlife/vue-copy-action` 的目录、边界、发布和消费方式。
@@ -55,6 +57,7 @@ webhook/              webhook 服务源码与示例 env
 ## 文档更新入口
 
 - 调整顶层目录、目录职责或文档分层时，更新 [docs/repository-directory-governance.md](./docs/repository-directory-governance.md)。
+- 调整任一应用版本号、正式 tag 或 release 基线时，更新 [docs/version-matrix.md](./docs/version-matrix.md)。
 - 调整任一应用的正式设计、架构、产品或部署差异文档时，更新对应 `docs/<app>/` 目录。
 - 调整 webhook、systemd、部署脚本、部署目标注册表或发布流程时，更新 [docs/unified-deployment-and-operations.md](./docs/unified-deployment-and-operations.md)。
 - 调整 `packages/themes/dark-universe` 的目录、发布方式或接入方式时，更新 [docs/dark-universe-theme-package.md](./docs/dark-universe-theme-package.md)。
