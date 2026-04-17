@@ -28,6 +28,13 @@ if [ ! -f "$targets_path" ] && [[ "$targets_path" == /apps/iterlife-stack/* ]]; 
   fi
 fi
 
+if [ ! -f "$targets_path" ] && [[ "$targets_path" == /apps/iterlife-reunion-stack/* ]]; then
+  local_candidate="$ROOT_DIR/${targets_path#/apps/iterlife-reunion-stack/}"
+  if [ -f "$local_candidate" ]; then
+    targets_path="$local_candidate"
+  fi
+fi
+
 [ -f "$targets_path" ] || die "deploy targets file not found: $targets_path"
 
 python3 - "$targets_path" <<'PY'
@@ -49,6 +56,8 @@ required_keys = {
     "iterlife-reunion-ui",
     "iterlife-expenses-api",
     "iterlife-expenses-ui",
+    "iterlife-idaas-api",
+    "iterlife-idaas-ui",
 }
 
 required_fields = {
@@ -57,8 +66,9 @@ required_fields = {
     "compose_project_directory",
     "compose_service",
     "release_image_env",
-    "local_image_env",
-    "local_image_name",
+    "runtime_image_env",
+    "runtime_image_name",
+    "deployment_state_file",
     "healthcheck_url",
 }
 

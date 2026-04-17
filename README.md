@@ -24,6 +24,10 @@ systemd/              webhook 服务 unit 与 drop-in
 webhook/              webhook 服务源码与示例 env
 ```
 
+版本查询入口：
+
+- `bash scripts/show-runtime-versions.sh`
+
 ## 文档入口
 
 - [docs/governance_repository_directory_20260411.md](./docs/governance_repository_directory_20260411.md)
@@ -68,6 +72,7 @@ webhook/              webhook 服务源码与示例 env
 - 真实配置文件 `/apps/config/iterlife-stack/iterlife-deploy-webhook.env` 不入库。
 - 仓库只保留 `webhook/iterlife-deploy-webhook.env.example`。
 - 仓库内不存放任何真实 token、secret 或 password。
+- 生产运行别名统一使用 `:prod`，真实版本以 GHCR sha tag 和部署状态文件为准。
 
 ## 常用校验
 

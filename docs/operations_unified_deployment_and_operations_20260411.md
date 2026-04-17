@@ -1,6 +1,6 @@
 # 统一部署与运维
 
-最后更新：2026-04-11
+最后更新：2026-04-17
 
 本文档是 IterLife 当前统一部署事实源，覆盖发布路径、Secrets、服务器运行路径、回滚和排障。
 
@@ -12,6 +12,8 @@
 - `iterlife-reunion-ui`
 - `iterlife-expenses-api`
 - `iterlife-expenses-ui`
+- `iterlife-idaas-api`
+- `iterlife-idaas-ui`
 
 ## 2. 标准发布路径
 
@@ -22,7 +24,7 @@
 3. GitHub Actions 构建镜像并推送 GHCR。
 4. 共享 release workflow 回调部署 webhook。
 5. webhook 根据 `service` 命中 `config/deploy-targets.json`。
-6. `scripts/deploy-service-from-ghcr.sh` 统一完成镜像拉取、打标、`docker compose up -d` 和健康检查。
+6. `scripts/deploy-service-from-ghcr.sh` 统一完成镜像拉取、生产运行别名打标、`docker compose up -d`、健康检查和部署状态落盘。
 
 当前不允许：
 
@@ -48,6 +50,8 @@
 | `iterlife-reunion-ui` | `/apps/iterlife-reunion-ui` | `/apps/iterlife-reunion-ui/deploy/compose/reunion-ui.yml` | `http://127.0.0.1:13080` |
 | `iterlife-expenses-api` | `/apps/iterlife-expenses` | `/apps/iterlife-expenses/deploy/compose/expenses-api.yml` | `http://127.0.0.1:18180/api/health` |
 | `iterlife-expenses-ui` | `/apps/iterlife-expenses-ui` | `/apps/iterlife-expenses-ui/deploy/compose/expenses-ui.yml` | `http://127.0.0.1:13180` |
+| `iterlife-idaas-api` | `/apps/iterlife-idaas` | `/apps/iterlife-idaas/deploy/compose/idaas-api.yml` | `http://127.0.0.1:18280/actuator/health` |
+| `iterlife-idaas-ui` | `/apps/iterlife-idaas-ui` | `/apps/iterlife-idaas-ui/deploy/compose/idaas-ui.yml` | `http://127.0.0.1:13280` |
 
 以上事实以 `config/deploy-targets.json` 为准。
 
@@ -77,6 +81,8 @@
 - `iterlife-reunion-ui`
 - `iterlife-expenses`
 - `iterlife-expenses-ui`
+- `iterlife-idaas`
+- `iterlife-idaas-ui`
 
 ### 5.3 GitHub 自动提供的 Token
 
@@ -92,10 +98,34 @@
 - 控制面仓库：`/apps/iterlife-stack`
 - webhook 真实 env：`/apps/config/iterlife-stack/iterlife-deploy-webhook.env`
 - webhook 日志目录：`/apps/logs/webhook`
+- 部署状态目录：`/apps/logs/deploy-state`
 - systemd unit：`/etc/systemd/system/iterlife-app-deploy-webhook.service`
 - systemd drop-in：`/etc/systemd/system/iterlife-app-deploy-webhook.service.d/`
 
-## 7. 新服务器初始化
+## 7. 版本标识基线
+
+当前生产版本治理规则如下：
+
+- GHCR 事实版本使用不可变 `sha-<commit>` 标签
+- 服务器运行别名统一使用 `:prod`
+- 每次部署都会为目标服务落一份部署状态文件
+
+部署状态文件至少记录：
+
+- release image ref
+- image digest
+- commit sha
+- deployed at
+- 容器 configured image
+- 容器状态
+
+统一查询入口：
+
+```bash
+bash scripts/show-runtime-versions.sh
+```
+
+## 8. 新服务器初始化
 
 ```bash
 cd /apps
@@ -114,7 +144,7 @@ bash scripts/validate-webhook-config.sh \
   /apps/config/iterlife-stack/iterlife-deploy-webhook.env
 ```
 
-## 8. 日常检查
+## 9. 日常检查
 
 GitHub Actions 侧：
 
@@ -128,18 +158,21 @@ GitHub Actions 侧：
 sudo systemctl status iterlife-app-deploy-webhook.service --no-pager
 tail -n 120 /apps/logs/webhook/iterlife-deploy-webhook-$(date +%F).log
 sudo docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.RunningFor}}\t{{.Image}}'
+bash scripts/show-runtime-versions.sh
 ```
 
-## 9. 健康检查
+## 10. 健康检查
 
 ```bash
 curl -fsS http://127.0.0.1:18080/api/health
 curl -fsS http://127.0.0.1:13080
 curl -fsS http://127.0.0.1:18180/api/health
 curl -fsS http://127.0.0.1:13180
+curl -fsS http://127.0.0.1:18280/actuator/health
+curl -fsS http://127.0.0.1:13280
 ```
 
-## 10. 回滚
+## 11. 回滚
 
 标准回滚继续走同一套镜像部署链路，不回退到源码部署：
 
@@ -161,14 +194,15 @@ payload='{
 - 容器启动时间更新
 - 健康检查恢复
 
-## 11. 常见问题
+## 12. 常见问题
 
 - webhook 返回 `401`：通常是 `ALIYUN_DEPLOY_WEBHOOK_SECRET` 与服务器 `WEBHOOK_SECRET` 不一致。
 - webhook 返回 `unsupported service`：通常是 `service` 未在 `config/deploy-targets.json` 注册。
 - 镜像已推送但容器未更新：优先检查 `compose_file`、`compose_service` 和容器 `Config.Image`。
+- 容器显示 `:prod` 但仍看不出具体 commit：优先检查 `bash scripts/show-runtime-versions.sh` 或部署状态文件。
 - 健康检查失败：优先检查 webhook 日志、容器日志和本地健康检查地址。
 
-## 12. 服务器治理基线
+## 13. 服务器治理基线
 
 当前生产服务器治理已经收官，后续运维以以下基线为准：
 
@@ -186,6 +220,8 @@ payload='{
 - `127.0.0.1:13080`：reunion UI
 - `127.0.0.1:18180`：expenses API
 - `127.0.0.1:13180`：expenses UI
+- `127.0.0.1:18280`：idaas API
+- `127.0.0.1:13280`：idaas UI
 - `127.0.0.1` 和 `172.17.0.1`：Redis
 - `127.0.0.1:3128`：Squid
 
