@@ -42,6 +42,9 @@
 - `systemd/iterlife-app-deploy-webhook.service`
 - `.github/workflows/reusable-release-ghcr-webhook.yml`
 
+当前只有上述资产属于生产部署控制面事实源。
+业务仓中如存在 `WebhookController`、`GITHUB_WEBHOOK_SECRET` 等业务集成入口，不应视为部署控制面的一部分。
+
 ## 4. 当前部署矩阵
 
 | Service | Repo Dir | Compose File | Healthcheck |
@@ -95,12 +98,14 @@
 
 ## 6. 服务器运行时路径
 
-- 控制面仓库：`/apps/iterlife-stack`
-- webhook 真实 env：`/apps/config/iterlife-stack/iterlife-deploy-webhook.env`
+- 控制面仓库：`/apps/iterlife-reunion-stack`
+- webhook 真实 env：`/apps/config/iterlife-reunion-stack/iterlife-deploy-webhook.env`
 - webhook 日志目录：`/apps/logs/webhook`
 - 部署状态目录：`/apps/logs/deploy-state`
 - systemd unit：`/etc/systemd/system/iterlife-app-deploy-webhook.service`
 - systemd drop-in：`/etc/systemd/system/iterlife-app-deploy-webhook.service.d/`
+- 宿主机 Nginx 生效目录：`/etc/nginx`
+- 宿主机 Nginx 备份与快照目录：`/apps/config/nginx`
 
 ## 7. 版本标识基线
 
@@ -129,11 +134,11 @@ bash scripts/show-runtime-versions.sh
 
 ```bash
 cd /apps
-git clone git@github.com:LuJie0403/iterlife-stack.git
-cd /apps/iterlife-stack
-mkdir -p /apps/config/iterlife-stack
+git clone git@github.com:LuJie0403/iterlife-stack.git /apps/iterlife-reunion-stack
+cd /apps/iterlife-reunion-stack
+mkdir -p /apps/config/iterlife-reunion-stack
 cp webhook/iterlife-deploy-webhook.env.example \
-  /apps/config/iterlife-stack/iterlife-deploy-webhook.env
+  /apps/config/iterlife-reunion-stack/iterlife-deploy-webhook.env
 sudo install -D -m 644 systemd/iterlife-app-deploy-webhook.service \
   /etc/systemd/system/iterlife-app-deploy-webhook.service
 sudo install -D -m 644 systemd/iterlife-app-deploy-webhook.service.d/10-log-perms.conf \
@@ -141,7 +146,7 @@ sudo install -D -m 644 systemd/iterlife-app-deploy-webhook.service.d/10-log-perm
 sudo systemctl daemon-reload
 sudo systemctl enable --now iterlife-app-deploy-webhook.service
 bash scripts/validate-webhook-config.sh \
-  /apps/config/iterlife-stack/iterlife-deploy-webhook.env
+  /apps/config/iterlife-reunion-stack/iterlife-deploy-webhook.env
 ```
 
 ## 9. 日常检查
@@ -231,3 +236,4 @@ payload='{
 - 生产流量不再依赖历史 `/www` 运行模型，宿主机 Nginx 以 `/etc/nginx` 为准。
 - 运行资产、部署链路与日志目录已经收敛到当前控制面基线。
 - 如需继续调整主机级治理策略，应直接更新本文档，不再单独拆分新的根目录运维审计文档。
+- 控制面当前服务器路径仍为 `/apps/iterlife-reunion-stack`，如需迁移到 `/apps/iterlife-stack`，应按控制面治理方案分阶段执行。
