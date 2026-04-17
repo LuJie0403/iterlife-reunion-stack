@@ -89,8 +89,9 @@ def load_deploy_targets() -> Dict[str, Dict[str, str]]:
             "compose_project_directory",
             "compose_service",
             "release_image_env",
-            "local_image_env",
-            "local_image_name",
+            "runtime_image_env",
+            "runtime_image_name",
+            "deployment_state_file",
             "healthcheck_url",
         ]
         normalized_entry: Dict[str, str] = {}
@@ -187,11 +188,14 @@ def run_deploy(payload: dict, resolved_service: str) -> Tuple[int, str]:
 
     env = os.environ.copy()
     env[target["release_image_env"]] = image_ref
-    env[target["local_image_env"]] = target["local_image_name"]
+    env[target["runtime_image_env"]] = target["runtime_image_name"]
     env["DEPLOY_TARGET_SERVICE"] = resolved_service
     env["DEPLOY_REQUEST_SERVICE"] = request_service
     env["RELEASE_IMAGE_REF"] = image_ref
     env["DEPLOY_TARGETS_FILE"] = DEPLOY_TARGETS_FILE.as_posix()
+    repository = (payload.get("repository") or "").strip()
+    if repository:
+        env["RELEASE_REPOSITORY"] = repository
     if release_commit_sha:
         env["RELEASE_COMMIT_SHA"] = release_commit_sha
     if release_digest:
