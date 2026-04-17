@@ -31,6 +31,11 @@ cd packages/themes/dark-universe && npm run build
 cd packages/vue/copy-action && pnpm build
 ```
 
+版本查询入口：
+
+- `bash scripts/show-runtime-versions.sh`
+
+## 文档入口
 ## 关键入口 / Key Entry Points
 
 - `config/deploy-targets.json`

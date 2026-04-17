@@ -24,7 +24,7 @@
 3. GitHub Actions 构建镜像并推送 GHCR。
 4. 共享 release workflow 回调部署 webhook。
 5. webhook 根据 `service` 命中 `config/deploy-targets.json`。
-6. `scripts/deploy-service-from-ghcr.sh` 统一完成镜像拉取、打标、`docker compose up -d` 和健康检查。
+6. `scripts/deploy-service-from-ghcr.sh` 统一完成镜像拉取、生产运行别名打标、`docker compose up -d`、健康检查和部署状态落盘。
 
 当前不允许：
 
@@ -101,12 +101,36 @@
 - 控制面仓库：`/apps/iterlife-reunion-stack`
 - webhook 真实 env：`/apps/config/iterlife-reunion-stack/iterlife-deploy-webhook.env`
 - webhook 日志目录：`/apps/logs/webhook`
+- 部署状态目录：`/apps/logs/deploy-state`
 - systemd unit：`/etc/systemd/system/iterlife-app-deploy-webhook.service`
 - systemd drop-in：`/etc/systemd/system/iterlife-app-deploy-webhook.service.d/`
 - 宿主机 Nginx 生效目录：`/etc/nginx`
 - 宿主机 Nginx 备份与快照目录：`/apps/config/nginx`
 
-## 7. 新服务器初始化
+## 7. 版本标识基线
+
+当前生产版本治理规则如下：
+
+- GHCR 事实版本使用不可变 `sha-<commit>` 标签
+- 服务器运行别名统一使用 `:prod`
+- 每次部署都会为目标服务落一份部署状态文件
+
+部署状态文件至少记录：
+
+- release image ref
+- image digest
+- commit sha
+- deployed at
+- 容器 configured image
+- 容器状态
+
+统一查询入口：
+
+```bash
+bash scripts/show-runtime-versions.sh
+```
+
+## 8. 新服务器初始化
 
 ```bash
 cd /apps
@@ -125,7 +149,7 @@ bash scripts/validate-webhook-config.sh \
   /apps/config/iterlife-reunion-stack/iterlife-deploy-webhook.env
 ```
 
-## 8. 日常检查
+## 9. 日常检查
 
 GitHub Actions 侧：
 
@@ -139,9 +163,10 @@ GitHub Actions 侧：
 sudo systemctl status iterlife-app-deploy-webhook.service --no-pager
 tail -n 120 /apps/logs/webhook/iterlife-deploy-webhook-$(date +%F).log
 sudo docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.RunningFor}}\t{{.Image}}'
+bash scripts/show-runtime-versions.sh
 ```
 
-## 9. 健康检查
+## 10. 健康检查
 
 ```bash
 curl -fsS http://127.0.0.1:18080/api/health
@@ -152,7 +177,7 @@ curl -fsS http://127.0.0.1:18280/actuator/health
 curl -fsS http://127.0.0.1:13280
 ```
 
-## 10. 回滚
+## 11. 回滚
 
 标准回滚继续走同一套镜像部署链路，不回退到源码部署：
 
@@ -174,14 +199,15 @@ payload='{
 - 容器启动时间更新
 - 健康检查恢复
 
-## 11. 常见问题
+## 12. 常见问题
 
 - webhook 返回 `401`：通常是 `ALIYUN_DEPLOY_WEBHOOK_SECRET` 与服务器 `WEBHOOK_SECRET` 不一致。
 - webhook 返回 `unsupported service`：通常是 `service` 未在 `config/deploy-targets.json` 注册。
 - 镜像已推送但容器未更新：优先检查 `compose_file`、`compose_service` 和容器 `Config.Image`。
+- 容器显示 `:prod` 但仍看不出具体 commit：优先检查 `bash scripts/show-runtime-versions.sh` 或部署状态文件。
 - 健康检查失败：优先检查 webhook 日志、容器日志和本地健康检查地址。
 
-## 12. 服务器治理基线
+## 13. 服务器治理基线
 
 当前生产服务器治理已经收官，后续运维以以下基线为准：
 
