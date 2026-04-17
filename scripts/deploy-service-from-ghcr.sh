@@ -148,13 +148,7 @@ state_file = sys.argv[1]
 container_id = sys.argv[2]
 
 inspect = subprocess.run(
-    [
-        "docker",
-        "inspect",
-        "--format",
-        "{{json .}}",
-        container_id,
-    ],
+    ["docker", "inspect", "--format", "{{json .}}", container_id],
     check=True,
     capture_output=True,
     text=True,
@@ -225,7 +219,6 @@ if not isinstance(target, dict):
     raise SystemExit(f"unknown deploy target: {service}")
 
 required_fields = [
-    "repo_dir",
     "compose_file",
     "compose_project_directory",
     "compose_service",
@@ -246,7 +239,6 @@ if not isinstance(compose_no_deps, bool):
     raise SystemExit(f"compose_no_deps must be boolean for {service}")
 
 values = {
-    "TARGET_REPO_DIR": target["repo_dir"].strip(),
     "TARGET_COMPOSE_FILE": target["compose_file"].strip(),
     "TARGET_COMPOSE_PROJECT_DIRECTORY": target["compose_project_directory"].strip(),
     "TARGET_COMPOSE_SERVICE": target["compose_service"].strip(),
@@ -324,5 +316,4 @@ echo "service=${DEPLOY_TARGET_SERVICE}"
 echo "image_ref=${RELEASE_IMAGE_REF}"
 echo "runtime_image_name=${TARGET_RUNTIME_IMAGE_NAME}"
 echo "healthcheck_url=${TARGET_HEALTHCHECK_URL}"
-echo "deployment_state_file=${TARGET_DEPLOYMENT_STATE_FILE}"
 print_container_details "$container_id"

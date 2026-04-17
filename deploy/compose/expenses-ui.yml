@@ -1,0 +1,15 @@
+name: iterlife-expenses
+
+services:
+  iterlife-expenses-ui:
+    image: ${RUNTIME_UI_IMAGE_NAME:-iterlife-expenses-ui:prod}
+    container_name: iterlife-expenses-ui
+    env_file:
+      - ${UI_ENV_FILE:-/apps/config/iterlife-expenses/ui.env}
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - ${UI_RUNTIME_CONFIG_FILE:-/apps/config/iterlife-expenses/ui-runtime-config.js}:/usr/share/nginx/html/runtime-config.js:ro
+    restart: unless-stopped
+    ports:
+      - "${UI_BIND_HOST:-127.0.0.1}:${UI_PORT:-13180}:80"

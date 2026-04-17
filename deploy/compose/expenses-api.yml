@@ -1,0 +1,20 @@
+name: iterlife-expenses
+
+services:
+  iterlife-expenses-api:
+    image: ${RUNTIME_API_IMAGE_NAME:-iterlife-expenses-api:prod}
+    container_name: iterlife-expenses-api
+    env_file:
+      - ${BACKEND_ENV_FILE:-/apps/config/iterlife-expenses/backend.env}
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "${API_BIND_HOST:-127.0.0.1}:${API_PORT:-18180}:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3).read()\""]
+      interval: 20s
+      timeout: 5s
+      retries: 5

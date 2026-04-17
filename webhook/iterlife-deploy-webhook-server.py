@@ -84,7 +84,6 @@ def load_deploy_targets() -> Dict[str, Dict[str, str]]:
             raise SystemExit(f"Service config must be object: {service_name}")
 
         required_fields = [
-            "repo_dir",
             "compose_file",
             "compose_project_directory",
             "compose_service",

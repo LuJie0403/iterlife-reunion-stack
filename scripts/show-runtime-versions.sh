@@ -2,68 +2,50 @@
 set -Eeuo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DEPLOY_TARGETS_FILE="${DEPLOY_TARGETS_FILE:-$ROOT_DIR/config/deploy-targets.json}"
+TARGETS_FILE="${1:-$ROOT_DIR/config/deploy-targets.json}"
 
-die() {
-  echo "[show-runtime-versions][error] $*" >&2
+[ -f "$TARGETS_FILE" ] || {
+  echo "[show-runtime-versions][error] targets file not found: $TARGETS_FILE" >&2
   exit 1
 }
 
-command -v python3 >/dev/null 2>&1 || die "Missing command: python3"
-[ -f "$DEPLOY_TARGETS_FILE" ] || die "deploy targets file not found: $DEPLOY_TARGETS_FILE"
-
-python3 - "$DEPLOY_TARGETS_FILE" <<'PY'
+python3 - "$TARGETS_FILE" <<'PY'
 import json
-import os
 import sys
 from pathlib import Path
 
 targets_path = Path(sys.argv[1])
 data = json.loads(targets_path.read_text(encoding="utf-8"))
 
+headers = ["service", "runtime_image", "release_tag", "commit_sha", "deployed_at", "container_image"]
 rows = []
-for service, cfg in sorted(data.items()):
-    state_file = Path(str(cfg.get("deployment_state_file", "")).strip())
-    state = {}
+
+for service in sorted(data):
+    target = data[service]
+    state_file = Path(target.get("deployment_state_file", ""))
+    runtime_image = target.get("runtime_image_name", "")
+    release_tag = ""
+    commit_sha = ""
+    deployed_at = ""
+    container_image = ""
     if state_file.is_file():
-        try:
-            state = json.loads(state_file.read_text(encoding="utf-8"))
-        except Exception:
-            state = {"_error": "invalid-json"}
+        state = json.loads(state_file.read_text(encoding="utf-8"))
+        release_tag = state.get("release_image_tag", "")
+        commit_sha = state.get("release_commit_sha", "")
+        deployed_at = state.get("deployed_at", "")
+        container_image = state.get("container", {}).get("configured_image", "")
+    rows.append([service, runtime_image, release_tag, commit_sha, deployed_at, container_image])
 
-    container = state.get("container", {}) if isinstance(state, dict) else {}
-    rows.append(
-        {
-            "service": service,
-            "runtime_image_name": str(cfg.get("runtime_image_name", "")),
-            "release_image_ref": str(state.get("release_image_ref", "")),
-            "release_commit_sha": str(state.get("release_commit_sha", "")),
-            "release_image_digest": str(state.get("release_image_digest", "")),
-            "deployed_at": str(state.get("deployed_at", "")),
-            "container_status": str(container.get("status", "")),
-            "configured_image": str(container.get("configured_image", "")),
-            "state_file": state_file.as_posix(),
-        }
-    )
-
-headers = [
-    "service",
-    "runtime_image_name",
-    "release_commit_sha",
-    "deployed_at",
-    "container_status",
-    "configured_image",
-    "release_image_ref",
-]
-
-widths = {h: len(h) for h in headers}
+widths = [len(h) for h in headers]
 for row in rows:
-    for h in headers:
-        widths[h] = max(widths[h], len(row[h]))
+    for idx, value in enumerate(row):
+        widths[idx] = max(widths[idx], len(str(value)))
 
-fmt = "  ".join(f"{{{h}:{widths[h]}}}" for h in headers)
-print(fmt.format(**{h: h for h in headers}))
-print(fmt.format(**{h: "-" * widths[h] for h in headers}))
+def render(row):
+    return "  ".join(str(value).ljust(widths[idx]) for idx, value in enumerate(row))
+
+print(render(headers))
+print("  ".join("-" * width for width in widths))
 for row in rows:
-    print(fmt.format(**row))
+    print(render(row))
 PY
