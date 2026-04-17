@@ -1,0 +1,13 @@
+name: iterlife-idaas
+
+services:
+  iterlife-idaas-ui:
+    image: ${RUNTIME_UI_IMAGE_NAME:-iterlife-idaas-ui:prod}
+    container_name: iterlife-idaas-ui
+    env_file:
+      - ${UI_ENV_FILE:-/apps/config/iterlife-idaas/ui.env}
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+    restart: unless-stopped
+    ports:
+      - "${UI_BIND_HOST:-127.0.0.1}:${UI_PORT:-13280}:3000"

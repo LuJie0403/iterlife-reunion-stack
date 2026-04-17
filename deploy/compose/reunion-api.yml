@@ -1,0 +1,39 @@
+name: iterlife-reunion
+
+services:
+  iterlife-reunion-api:
+    image: ${RUNTIME_API_IMAGE_NAME:-iterlife-reunion-api:prod}
+    container_name: iterlife-reunion-api
+    env_file:
+      - ${BACKEND_ENV_FILE:-/apps/config/iterlife-reunion/backend.env}
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      JAVA_TOOL_OPTIONS: -Duser.timezone=${TZ:-Asia/Shanghai}
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      iterlife-reunion-meili:
+        condition: service_started
+    ports:
+      - "${API_BIND_HOST:-127.0.0.1}:${API_PORT:-18080}:8080"
+    networks:
+      - iterlife-reunion-api-net
+
+  iterlife-reunion-meili:
+    image: getmeili/meilisearch:v1.10
+    container_name: iterlife-reunion-meili
+    restart: unless-stopped
+    environment:
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-iterlife-reunion-meili-dev-key}
+    volumes:
+      - ${MEILI_DATA_DIR:-/apps/data/iterlife-reunion/meili}:/meili_data
+    ports:
+      - "${MEILI_BIND_HOST:-127.0.0.1}:${MEILI_PORT:-17700}:7700"
+    networks:
+      - iterlife-reunion-api-net
+
+networks:
+  iterlife-reunion-api-net:
+    driver: bridge

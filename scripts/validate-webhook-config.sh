@@ -49,16 +49,18 @@ required_keys = {
     "iterlife-reunion-ui",
     "iterlife-expenses-api",
     "iterlife-expenses-ui",
+    "iterlife-idaas-api",
+    "iterlife-idaas-ui",
 }
 
 required_fields = {
-    "repo_dir",
     "compose_file",
     "compose_project_directory",
     "compose_service",
     "release_image_env",
-    "local_image_env",
-    "local_image_name",
+    "runtime_image_env",
+    "runtime_image_name",
+    "deployment_state_file",
     "healthcheck_url",
 }
 
@@ -72,7 +74,7 @@ for key, value in data.items():
         field_value = str(value.get(field_name, "")).strip()
         if not field_value:
             raise SystemExit(f"service '{key}' missing {field_name}")
-        if field_name in {"repo_dir", "compose_file", "compose_project_directory"} and not field_value.startswith("/apps/"):
+        if field_name in {"compose_file", "compose_project_directory"} and not field_value.startswith("/apps/"):
             raise SystemExit(
                 f"service '{key}' {field_name} must be absolute /apps path: {field_value}"
             )

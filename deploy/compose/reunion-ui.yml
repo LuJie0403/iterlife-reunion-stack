@@ -1,0 +1,13 @@
+name: iterlife-reunion
+
+services:
+  iterlife-reunion-ui:
+    image: ${RUNTIME_UI_IMAGE_NAME:-iterlife-reunion-ui:prod}
+    container_name: iterlife-reunion-ui
+    env_file:
+      - ${UI_ENV_FILE:-/apps/config/iterlife-reunion/ui.env}
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+    restart: unless-stopped
+    ports:
+      - "${UI_BIND_HOST:-127.0.0.1}:${UI_PORT:-13080}:3000"

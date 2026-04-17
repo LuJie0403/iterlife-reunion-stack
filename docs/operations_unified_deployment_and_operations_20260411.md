@@ -12,6 +12,8 @@
 - `iterlife-reunion-ui`
 - `iterlife-expenses-api`
 - `iterlife-expenses-ui`
+- `iterlife-idaas-api`
+- `iterlife-idaas-ui`
 
 ## 2. 标准发布路径
 
@@ -42,14 +44,18 @@
 
 ## 4. 当前部署矩阵
 
-| Service | Repo Dir | Compose File | Healthcheck |
-| --- | --- | --- | --- |
-| `iterlife-reunion-api` | `/apps/iterlife-reunion` | `/apps/iterlife-reunion/deploy/compose/reunion-api.yml` | `http://127.0.0.1:18080/api/health` |
-| `iterlife-reunion-ui` | `/apps/iterlife-reunion-ui` | `/apps/iterlife-reunion-ui/deploy/compose/reunion-ui.yml` | `http://127.0.0.1:13080` |
-| `iterlife-expenses-api` | `/apps/iterlife-expenses` | `/apps/iterlife-expenses/deploy/compose/expenses-api.yml` | `http://127.0.0.1:18180/api/health` |
-| `iterlife-expenses-ui` | `/apps/iterlife-expenses-ui` | `/apps/iterlife-expenses-ui/deploy/compose/expenses-ui.yml` | `http://127.0.0.1:13180` |
+| Service | Compose File | Healthcheck |
+| --- | --- | --- |
+| `iterlife-reunion-api` | `/apps/iterlife-stack/deploy/compose/reunion-api.yml` | `http://127.0.0.1:18080/api/health` |
+| `iterlife-reunion-ui` | `/apps/iterlife-stack/deploy/compose/reunion-ui.yml` | `http://127.0.0.1:13080` |
+| `iterlife-expenses-api` | `/apps/iterlife-stack/deploy/compose/expenses-api.yml` | `http://127.0.0.1:18180/api/health` |
+| `iterlife-expenses-ui` | `/apps/iterlife-stack/deploy/compose/expenses-ui.yml` | `http://127.0.0.1:13180` |
+| `iterlife-idaas-api` | `/apps/iterlife-stack/deploy/compose/idaas-api.yml` | `http://127.0.0.1:18280/actuator/health` |
+| `iterlife-idaas-ui` | `/apps/iterlife-stack/deploy/compose/idaas-ui.yml` | `http://127.0.0.1:13280` |
 
 以上事实以 `config/deploy-targets.json` 为准。
+
+当前生产部署不再以业务源码目录作为 compose 事实源；业务源码仓应逐步退出生产机，只保留控制面、运行配置、数据、日志与静态资源。
 
 ## 5. GitHub Actions 与 Secrets
 
@@ -77,6 +83,8 @@
 - `iterlife-reunion-ui`
 - `iterlife-expenses`
 - `iterlife-expenses-ui`
+- `iterlife-idaas`
+- `iterlife-idaas-ui`
 
 ### 5.3 GitHub 自动提供的 Token
 
@@ -137,6 +145,8 @@ curl -fsS http://127.0.0.1:18080/api/health
 curl -fsS http://127.0.0.1:13080
 curl -fsS http://127.0.0.1:18180/api/health
 curl -fsS http://127.0.0.1:13180
+curl -fsS http://127.0.0.1:18280/actuator/health
+curl -fsS http://127.0.0.1:13280
 ```
 
 ## 10. 回滚
@@ -186,6 +196,8 @@ payload='{
 - `127.0.0.1:13080`：reunion UI
 - `127.0.0.1:18180`：expenses API
 - `127.0.0.1:13180`：expenses UI
+- `127.0.0.1:18280`：idaas API
+- `127.0.0.1:13280`：idaas UI
 - `127.0.0.1` 和 `172.17.0.1`：Redis
 - `127.0.0.1:3128`：Squid
 

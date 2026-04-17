@@ -19,6 +19,7 @@ IterLife 控制面、正式文档与共享前端资产仓。
 config/               部署目标注册表
 docs/                 跨应用文档与应用子目录文档
 packages/             前端共享包（themes / vue）
+deploy/compose/       控制面持有的生产 compose 定义
 scripts/              通用部署与校验脚本
 systemd/              webhook 服务 unit 与 drop-in
 webhook/              webhook 服务源码与示例 env
@@ -30,6 +31,7 @@ webhook/              webhook 服务源码与示例 env
 - [docs/version_matrix_20260411.md](./docs/version_matrix_20260411.md)
 - [docs/operations_unified_deployment_and_operations_20260411.md](./docs/operations_unified_deployment_and_operations_20260411.md)
 - [docs/shared_design_frontend_packages_20260411.md](./docs/shared_design_frontend_packages_20260411.md)
+- [docs/governance_business_source_exit_20260417.md](./docs/governance_business_source_exit_20260417.md)
 - [docs/idaas/idaas_design_identity_management_20260411.md](./docs/idaas/idaas_design_identity_management_20260411.md)
 - [docs/reunion/reunion_overview_system_overview_20260411.md](./docs/reunion/reunion_overview_system_overview_20260411.md)
 - [docs/reunion/reunion_product_product_overview_20260411.md](./docs/reunion/reunion_product_product_overview_20260411.md)
@@ -41,6 +43,7 @@ webhook/              webhook 服务源码与示例 env
 - [docs/version_matrix_20260411.md](./docs/version_matrix_20260411.md)：当前应用版本矩阵、版本台账和统一版本治理规则。
 - [docs/operations_unified_deployment_and_operations_20260411.md](./docs/operations_unified_deployment_and_operations_20260411.md)：统一 GHCR + webhook 部署链路、服务器初始化、发布检查、回滚与排障，以及当前服务器治理基线与 secrets 事实。
 - [docs/shared_design_frontend_packages_20260411.md](./docs/shared_design_frontend_packages_20260411.md)：共享前端包的目录边界、发布方式和消费规则。
+- [docs/governance_business_source_exit_20260417.md](./docs/governance_business_source_exit_20260417.md)：生产部署与业务源码目录解耦的治理方案、依赖清单与验证结果。
 - [docs/idaas/idaas_design_identity_management_20260411.md](./docs/idaas/idaas_design_identity_management_20260411.md)：统一身份、会话、授权和 IDaaS 拆分设计。
 - [docs/reunion/reunion_overview_system_overview_20260411.md](./docs/reunion/reunion_overview_system_overview_20260411.md)：Reunion API/UI 的统一系统概览。
 - [docs/reunion/reunion_product_product_overview_20260411.md](./docs/reunion/reunion_product_product_overview_20260411.md)：Reunion 当前产品定位、核心能力和优先级。
@@ -60,6 +63,7 @@ webhook/              webhook 服务源码与示例 env
 - 调整任一应用版本号、正式 tag 或 release 基线时，更新 [docs/version_matrix_20260411.md](./docs/version_matrix_20260411.md)。
 - 调整任一应用的正式设计、架构、产品或部署差异文档时，更新对应的平铺概览文档或同主题文档。
 - 调整 webhook、systemd、部署脚本、部署目标注册表、发布流程或 workflow secrets 时，更新 [docs/operations_unified_deployment_and_operations_20260411.md](./docs/operations_unified_deployment_and_operations_20260411.md)。
+- 调整控制面持有的生产 compose、业务源码是否仍为生产依赖时，更新 [docs/governance_business_source_exit_20260417.md](./docs/governance_business_source_exit_20260417.md)。
 - 调整共享前端包的目录、发布方式或接入方式时，更新 [docs/shared_design_frontend_packages_20260411.md](./docs/shared_design_frontend_packages_20260411.md)。
 - 调整身份体系、会话模型或 IDaaS 拆分设计时，更新 [docs/idaas/idaas_design_identity_management_20260411.md](./docs/idaas/idaas_design_identity_management_20260411.md)。
 

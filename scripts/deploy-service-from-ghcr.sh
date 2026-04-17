@@ -5,6 +5,9 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEPLOY_TARGETS_FILE="${DEPLOY_TARGETS_FILE:-$ROOT_DIR/config/deploy-targets.json}"
 DEPLOY_TARGET_SERVICE="${DEPLOY_TARGET_SERVICE:-}"
 RELEASE_IMAGE_REF="${RELEASE_IMAGE_REF:-}"
+RELEASE_IMAGE_DIGEST="${RELEASE_IMAGE_DIGEST:-}"
+RELEASE_COMMIT_SHA="${RELEASE_COMMIT_SHA:-}"
+RELEASE_REPOSITORY="${RELEASE_REPOSITORY:-}"
 
 GHCR_REGISTRY="${GHCR_REGISTRY:-ghcr.io}"
 GHCR_USERNAME="${GHCR_USERNAME:-}"
@@ -128,6 +131,67 @@ print_container_details() {
   echo "compose_service=${compose_service}"
 }
 
+write_deployment_state() {
+  local state_file="$1"
+  local container_id="$2"
+
+  mkdir -p "$(dirname "$state_file")"
+
+  python3 - "$state_file" "$container_id" <<'PY'
+import json
+import os
+import subprocess
+import sys
+from datetime import datetime, timezone
+
+state_file = sys.argv[1]
+container_id = sys.argv[2]
+
+inspect = subprocess.run(
+    ["docker", "inspect", "--format", "{{json .}}", container_id],
+    check=True,
+    capture_output=True,
+    text=True,
+)
+
+container = json.loads(inspect.stdout)
+labels = container.get("Config", {}).get("Labels") or {}
+
+payload = {
+    "service": os.environ.get("DEPLOY_TARGET_SERVICE", ""),
+    "request_service": os.environ.get("DEPLOY_REQUEST_SERVICE", ""),
+    "repository": os.environ.get("RELEASE_REPOSITORY", ""),
+    "release_image_ref": os.environ.get("RELEASE_IMAGE_REF", ""),
+    "release_image_digest": os.environ.get("RELEASE_IMAGE_DIGEST", ""),
+    "release_commit_sha": os.environ.get("RELEASE_COMMIT_SHA", ""),
+    "release_registry": os.environ.get("GHCR_REGISTRY", ""),
+    "release_owner": os.environ.get("RELEASE_IMAGE_OWNER", ""),
+    "release_image_name": os.environ.get("RELEASE_IMAGE_NAME", ""),
+    "release_image_tag": os.environ.get("RELEASE_IMAGE_TAG", ""),
+    "runtime_image_name": os.environ.get("TARGET_RUNTIME_IMAGE_NAME", ""),
+    "healthcheck_url": os.environ.get("TARGET_HEALTHCHECK_URL", ""),
+    "deployed_at": datetime.now(timezone.utc).isoformat(),
+    "container": {
+        "id": container.get("Id", ""),
+        "name": (container.get("Name", "") or "").lstrip("/"),
+        "configured_image": container.get("Config", {}).get("Image", ""),
+        "image_id": container.get("Image", ""),
+        "created_at": container.get("Created", ""),
+        "status": container.get("State", {}).get("Status", ""),
+        "started_at": container.get("State", {}).get("StartedAt", ""),
+        "compose_project": labels.get("com.docker.compose.project", ""),
+        "compose_service": labels.get("com.docker.compose.service", ""),
+    },
+}
+
+tmp_file = state_file + ".tmp"
+with open(tmp_file, "w", encoding="utf-8") as fp:
+    json.dump(payload, fp, ensure_ascii=True, indent=2, sort_keys=True)
+    fp.write("\n")
+os.replace(tmp_file, state_file)
+PY
+}
+
 require_cmd docker
 require_cmd curl
 require_cmd python3
@@ -155,13 +219,13 @@ if not isinstance(target, dict):
     raise SystemExit(f"unknown deploy target: {service}")
 
 required_fields = [
-    "repo_dir",
     "compose_file",
     "compose_project_directory",
     "compose_service",
     "release_image_env",
-    "local_image_env",
-    "local_image_name",
+    "runtime_image_env",
+    "runtime_image_name",
+    "deployment_state_file",
     "healthcheck_url",
 ]
 
@@ -175,13 +239,13 @@ if not isinstance(compose_no_deps, bool):
     raise SystemExit(f"compose_no_deps must be boolean for {service}")
 
 values = {
-    "TARGET_REPO_DIR": target["repo_dir"].strip(),
     "TARGET_COMPOSE_FILE": target["compose_file"].strip(),
     "TARGET_COMPOSE_PROJECT_DIRECTORY": target["compose_project_directory"].strip(),
     "TARGET_COMPOSE_SERVICE": target["compose_service"].strip(),
     "TARGET_RELEASE_IMAGE_ENV": target["release_image_env"].strip(),
-    "TARGET_LOCAL_IMAGE_ENV": target["local_image_env"].strip(),
-    "TARGET_LOCAL_IMAGE_NAME": target["local_image_name"].strip(),
+    "TARGET_RUNTIME_IMAGE_ENV": target["runtime_image_env"].strip(),
+    "TARGET_RUNTIME_IMAGE_NAME": target["runtime_image_name"].strip(),
+    "TARGET_DEPLOYMENT_STATE_FILE": target["deployment_state_file"].strip(),
     "TARGET_HEALTHCHECK_URL": target["healthcheck_url"].strip(),
     "TARGET_COMPOSE_NO_DEPS": "1" if compose_no_deps else "0",
 }
@@ -210,11 +274,17 @@ if ! retry_cmd "$GHCR_RETRY_COUNT" "$GHCR_RETRY_WAIT_SECONDS" \
   die "Failed to pull image after ${GHCR_RETRY_COUNT} attempts: ${RELEASE_IMAGE_REF}"
 fi
 
-log "Tagging ${RELEASE_IMAGE_REF} as ${TARGET_LOCAL_IMAGE_NAME}"
-docker tag "$RELEASE_IMAGE_REF" "$TARGET_LOCAL_IMAGE_NAME"
+log "Tagging ${RELEASE_IMAGE_REF} as ${TARGET_RUNTIME_IMAGE_NAME}"
+docker tag "$RELEASE_IMAGE_REF" "$TARGET_RUNTIME_IMAGE_NAME"
 
 export "${TARGET_RELEASE_IMAGE_ENV}=${RELEASE_IMAGE_REF}"
-export "${TARGET_LOCAL_IMAGE_ENV}=${TARGET_LOCAL_IMAGE_NAME}"
+export "${TARGET_RUNTIME_IMAGE_ENV}=${TARGET_RUNTIME_IMAGE_NAME}"
+export TARGET_RUNTIME_IMAGE_NAME
+export TARGET_HEALTHCHECK_URL
+export GHCR_REGISTRY RELEASE_IMAGE_OWNER RELEASE_IMAGE_NAME RELEASE_IMAGE_TAG
+export DEPLOY_TARGET_SERVICE
+export DEPLOY_REQUEST_SERVICE="${DEPLOY_REQUEST_SERVICE:-$DEPLOY_TARGET_SERVICE}"
+export RELEASE_IMAGE_REF RELEASE_IMAGE_DIGEST RELEASE_COMMIT_SHA RELEASE_REPOSITORY
 
 compose_args=(
   --project-directory "$TARGET_COMPOSE_PROJECT_DIRECTORY"
@@ -239,9 +309,11 @@ fi
 container_id="$(docker compose --project-directory "$TARGET_COMPOSE_PROJECT_DIRECTORY" -f "$TARGET_COMPOSE_FILE" ps -q "$TARGET_COMPOSE_SERVICE" | head -n 1)"
 [ -n "$container_id" ] || die "Unable to resolve container id for ${TARGET_COMPOSE_SERVICE}"
 
+write_deployment_state "$TARGET_DEPLOYMENT_STATE_FILE" "$container_id"
+
 log "Deployment completed for ${DEPLOY_TARGET_SERVICE}"
 echo "service=${DEPLOY_TARGET_SERVICE}"
 echo "image_ref=${RELEASE_IMAGE_REF}"
-echo "local_image_name=${TARGET_LOCAL_IMAGE_NAME}"
+echo "runtime_image_name=${TARGET_RUNTIME_IMAGE_NAME}"
 echo "healthcheck_url=${TARGET_HEALTHCHECK_URL}"
 print_container_details "$container_id"
