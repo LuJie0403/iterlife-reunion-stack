@@ -29,6 +29,8 @@ webhook/              webhook 服务源码与示例 env
 - [docs/governance_repository_directory_20260411.md](./docs/governance_repository_directory_20260411.md)
 - [docs/version_matrix_20260411.md](./docs/version_matrix_20260411.md)
 - [docs/operations_unified_deployment_and_operations_20260411.md](./docs/operations_unified_deployment_and_operations_20260411.md)
+- [docs/governance_control_plane_operating_baseline_20260417.md](./docs/governance_control_plane_operating_baseline_20260417.md)
+- [docs/operations_service_onboarding_template_20260417.md](./docs/operations_service_onboarding_template_20260417.md)
 - [docs/shared_design_frontend_packages_20260411.md](./docs/shared_design_frontend_packages_20260411.md)
 - [docs/idaas/idaas_design_identity_management_20260411.md](./docs/idaas/idaas_design_identity_management_20260411.md)
 - [docs/reunion/reunion_overview_system_overview_20260411.md](./docs/reunion/reunion_overview_system_overview_20260411.md)
@@ -40,6 +42,8 @@ webhook/              webhook 服务源码与示例 env
 - [docs/governance_repository_directory_20260411.md](./docs/governance_repository_directory_20260411.md)：仓库顶层目录、目录边界、准入规则和持续治理计划。
 - [docs/version_matrix_20260411.md](./docs/version_matrix_20260411.md)：当前应用版本矩阵、版本台账和统一版本治理规则。
 - [docs/operations_unified_deployment_and_operations_20260411.md](./docs/operations_unified_deployment_and_operations_20260411.md)：统一 GHCR + webhook 部署链路、服务器初始化、发布检查、回滚与排障，以及当前服务器治理基线与 secrets 事实。
+- [docs/governance_control_plane_operating_baseline_20260417.md](./docs/governance_control_plane_operating_baseline_20260417.md)：控制面运行基线、新服务接入标准、镜像命名、配置规范与禁止项。
+- [docs/operations_service_onboarding_template_20260417.md](./docs/operations_service_onboarding_template_20260417.md)：新增服务接入统一控制面的执行模板与验证清单。
 - [docs/shared_design_frontend_packages_20260411.md](./docs/shared_design_frontend_packages_20260411.md)：共享前端包的目录边界、发布方式和消费规则。
 - [docs/idaas/idaas_design_identity_management_20260411.md](./docs/idaas/idaas_design_identity_management_20260411.md)：统一身份、会话、授权和 IDaaS 拆分设计。
 - [docs/reunion/reunion_overview_system_overview_20260411.md](./docs/reunion/reunion_overview_system_overview_20260411.md)：Reunion API/UI 的统一系统概览。
@@ -60,6 +64,8 @@ webhook/              webhook 服务源码与示例 env
 - 调整任一应用版本号、正式 tag 或 release 基线时，更新 [docs/version_matrix_20260411.md](./docs/version_matrix_20260411.md)。
 - 调整任一应用的正式设计、架构、产品或部署差异文档时，更新对应的平铺概览文档或同主题文档。
 - 调整 webhook、systemd、部署脚本、部署目标注册表、发布流程或 workflow secrets 时，更新 [docs/operations_unified_deployment_and_operations_20260411.md](./docs/operations_unified_deployment_and_operations_20260411.md)。
+- 调整控制面制度、接入标准、发布禁止项或值班完成定义时，更新 [docs/governance_control_plane_operating_baseline_20260417.md](./docs/governance_control_plane_operating_baseline_20260417.md)。
+- 新增服务接入统一控制面时，按 [docs/operations_service_onboarding_template_20260417.md](./docs/operations_service_onboarding_template_20260417.md) 执行并回填结果。
 - 调整共享前端包的目录、发布方式或接入方式时，更新 [docs/shared_design_frontend_packages_20260411.md](./docs/shared_design_frontend_packages_20260411.md)。
 - 调整身份体系、会话模型或 IDaaS 拆分设计时，更新 [docs/idaas/idaas_design_identity_management_20260411.md](./docs/idaas/idaas_design_identity_management_20260411.md)。
 
