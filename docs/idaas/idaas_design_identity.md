@@ -112,6 +112,11 @@
 - 主按钮下方使用一条分割线和 `or`，把密码登录与第三方登录明确分层。
 - 第三方登录区采用图标化入口，不再使用当前的大块 provider card。
 - 卡片底部保留简短的条款说明和隐私政策链接。
+- 登录成功后，独立访问 IDaaS 的默认落点不再是登录页，也不再默认停留在 Session 页，而是进入 IDaaS 内部双 Tab 结构：
+  - `User Center`
+  - `Sessions`
+- `User Center` 与 `Sessions` 为并级主 Tab，且 `User Center` 排在 `Sessions` 之前。
+- 当没有业务客户端回调地址时，登录成功后默认进入 `User Center`。
 
 ### 4.3 第三方登录区布局
 
@@ -230,12 +235,12 @@
 - access token 短期有效。
 - refresh token 用于续期。
 - 会话必须可撤销、可审计、可单端退出和全端退出。
-- 当登录后没有客户端回调地址时，Session 页面是默认兜底回跳页。
+- 当登录后没有客户端回调地址时，IDaaS 默认进入 `User Center`，`Sessions` 作为同级辅助页存在。
 - Session 页面必须显示该条会话的认证方式，例如 `password`、`google`、`github`、`weixin`。
 - Session 页面必须显示该条会话由哪个客户端发起，例如 `iterlife-reunion`、`iterlife-expenses` 或 `iterlife-idaas`。
 - 会话默认有效期为 12 小时。
 - 当会话剩余有效期不超过 4 小时时，系统可在用户仍活跃的情况下自动滚动续期 12 小时。
-- 同一账号新登录成功后，旧的有效会话自动全局失效，只保留最新会话继续使用。
+- 同一用户下任意账号再次登录成功后，旧的有效会话自动全局失效，只保留最新会话继续使用。
 
 ### 5.3 认证与授权分层
 
@@ -256,6 +261,11 @@
   - `authenticate_identity`
 - 若后续存在账户绑定，则是在已有 `user_profile` 下新增或关联 `user_account`，并为该账号新增对应的 `authenticate_identity`。
 - 系统不得仅凭邮箱相同或昵称相同自动把第三方账号并入已有用户；用户归并必须经过显式确认和校验。
+- 首次第三方登录在 `authenticate_identity(provider_code, provider_subject)` 不存在时，不得直接创建 `user_account` 或 `authenticate_identity`，而是必须先进入“关联已有用户 / 新建用户”选择流程。
+- 只有在用户完成明确选择并提交必要信息后，系统才允许正式创建：
+  - `user_profile`
+  - `user_account`
+  - `authenticate_identity`
 
 ## 6. 用户、账号与认证模型
 
@@ -271,6 +281,7 @@
 - `certificate_number_hash` 用于唯一约束和查重。
 - `certificate_number_ciphertext` 或同等受保护字段用于受控读取和审计。
 - 在第一阶段落地中，历史账号和首次第三方登录可先创建“待补全”用户主档，因此上述证件识别字段允许暂时为空。
+- 在第一阶段落地中，历史账号允许先回填“待补全”用户主档；但首次第三方登录不再允许自动创建待补全用户主档，而必须进入显式选择与补充流程。
 - 当用户完成资料补全后，再对 `country_region_code + certificate_type + certificate_number_hash` 执行完整唯一识别约束。
 - `user_name` 记录用户名称。
 - `phone_country_code` 与 `phone_number` 记录用户手机号。
@@ -329,11 +340,35 @@
 
 - `authenticate_session` 是统一会话表。
 - 业务主键为 `session_id`。
+- `user_id` 关联 `user_profile.user_id`。
 - `account_id` 关联 `user_account.account_id`。
-- 会话通过账号解析到所属用户，不直接把用户表做成唯一登录入口。
+- 会话主语义按账号建立，但归属上挂到用户。
+- 同一用户任意账号再次登录成功后，历史 `ACTIVE` 会话应统一改为 `REVOKED`，并记录失效原因，例如 `REPLACED_BY_NEW_LOGIN`。
 - `provider_code` 记录本次会话的认证提供方。
 - `client` 记录本次认证是由哪个客户端发起。
 - `client_type` 不再保留在会话表中，而统一由 `authenticate_client` 管理。
+
+### 6.4.1 首次第三方登录待决策票据
+
+- 首次第三方登录待决策票据不进入正式数据库表，而是通过统一的 `PendingLoginStore` 进行服务端短期缓存。
+- 当前阶段 `PendingLoginStore` 使用单机内存实现，后续可在不改业务接口的前提下替换为 Redis。
+- 票据业务主键为 `ticket_id`。
+- 当 `authenticate_identity(provider_code, provider_subject)` 不存在时，系统不得直接创建正式账号、正式身份或正式会话，而是先创建一条待决策票据。
+- 票据至少记录：
+  - `ticket_id`
+  - `provider_code`
+  - `provider_subject`
+  - `provider_login`
+  - `provider_email`
+  - `display_name`
+  - `profile_json`
+  - `requested_client`
+  - `status`
+  - `expires_at`
+  - `resolved_user_id`
+  - `resolved_account_id`
+- 票据仅对当前首次登录流程有效，TTL 建议控制在 10 至 15 分钟。
+- 只有在用户完成“关联已有用户”或“新建用户”决策后，票据才可转为 `RESOLVED`，并继续签发正式登录会话。
 
 ### 6.5 认证客户端
 
@@ -400,8 +435,10 @@
 - 账号来源、会话提供方与 provider 表重命名脚本：`../sql/20260424_03_provider_identity_alignment.sql`
 - 账号来源、身份 provider 字段与授权关联列名收口脚本：`../sql/20260424_04_account_schema_alignment.sql`
 - 用户主档、国家字典与历史账号回填脚本：`../sql/20260426_01_user_profile_and_country.sql`
+- 用户级会话归属与互踢脚本：`../sql/20260426_02_user_scoped_session.sql`
 - 所有脚本由管理员按 PR 说明手动执行，业务应用运行时不自动改库。
 - `20260426_01_user_profile_and_country.sql` 已包含 `system_country` 初始化数据、`user_profile` 建表和历史 `user_account.user_id` 回填。
+- `20260426_02_user_scoped_session.sql` 已包含 `authenticate_session.user_id`、`revoke_reason` 和历史会话回填。
 
 ## 8. 登录与绑定流程设计
 
@@ -417,12 +454,12 @@
 
 1. 第三方 provider 回调后，系统拿到 `provider_code + provider_subject`。
 2. 若 `authenticate_identity` 已存在，则直接找到对应 `account_id`，再定位所属 `user_profile`。
-3. 若 `authenticate_identity` 不存在，则进入“创建或关联用户”流程：
-   - 若当前存在已登录会话且用户在用户中心发起绑定，则直接绑定到当前用户。
-   - 若当前无登录会话，则进入首次建档流程。
-4. 首次建档流程必须支持两条路径：
+3. 若 `authenticate_identity` 不存在，则系统只创建一个临时的“待处理第三方登录上下文”缓存票据，不得立即落正式的 `user_account`、`authenticate_identity` 或 `authenticate_session`。
+4. 若当前存在已登录会话且用户在用户中心发起绑定，则直接将该第三方身份绑定到当前用户。
+5. 若当前无登录会话，则进入首次登录决策流程，并向用户展示两条路径：
    - 关联已有用户
    - 新建用户
+6. 只有在用户完成上述决策并提交通过校验的资料后，系统才允许正式创建或关联账号，并最终签发登录会话。
 
 ### 8.3 关联已有用户
 
@@ -433,8 +470,10 @@
   - 已有邮箱 OTP 验证
   - 已登记证件信息核验
 - 关联成功后：
-  - 在目标 `user_profile` 下创建新的 `user_account`
-  - 为该账号写入新的 `authenticate_identity`
+  - 若目标用户下已存在匹配用途的账号，则允许把新的 `authenticate_identity` 直接绑定到该账号
+  - 若目标用户下不存在合适账号，则在目标 `user_profile` 下创建新的 `user_account`
+  - 然后再写入新的 `authenticate_identity`
+  - 最后签发登录会话
 
 ### 8.4 新建用户
 
@@ -447,12 +486,19 @@
   - 证件类型
   - 证件号码
   - 用户名称
-- 手机号码、邮箱可在首次建档或后续用户中心补充。
+- 手机号码、邮箱可在首次建档时补充；若当前流程允许延后补充，也必须至少保留清晰的“稍后补充”状态，而不是默认直接跳过。
+- 新建用户提交成功后，系统再创建正式 `user_account`、`authenticate_identity` 和 `authenticate_session`。
 
 ### 8.5 用户中心绑定能力
 
 - 用户中心需要新增“已绑定账号/登录方式”管理面板。
+- 用户中心是 IDaaS 登录成功后的默认入口页。
+- 顶层导航至少包含两个并级 Tab：
+  - `User Center`
+  - `Sessions`
+- `User Center` 必须位于 `Sessions` 之前。
 - 用户中心至少支持：
+  - 查看当前 `user_profile` 的主体信息
   - 查看当前用户下的全部 `user_account`
   - 查看每个账号下绑定的 `authenticate_identity`
   - 绑定新的 GitHub / Google / X / 微信 / 支付宝账号
@@ -462,119 +508,117 @@
   - 不允许把用户最后一个可用登录账号解绑掉
   - 不允许解绑当前唯一管理员依赖账号而导致失控
 
-## 9. 完整领域模型 / E-R 图
+## 9. 完整领域模型图
 
 ```mermaid
-erDiagram
-    system_country ||--o{ user_profile : "classifies"
-    user_profile ||--o{ user_account : "owns"
-    user_account ||--o{ authenticate_identity : "binds"
-    user_account ||--o{ authenticate_session : "opens"
-    authenticate_client ||--o{ authenticate_session : "originates"
-    authorize_role ||--o{ user_role : "grants"
-    authorize_role ||--o{ authorize_role_permission : "contains"
-    authorize_permission ||--o{ authorize_role_permission : "maps"
-
-    system_country {
-        bigint id
-        string country_code
-        string country_name
-        string country_name_zh
-        string country_short_name
-        string phone_code
-        string iso3_code
-        string default_locale
-        string status
+classDiagram
+    class SystemCountry {
+        +countryCode
+        +countryName
+        +phoneCode
+        +defaultLocale
+        +status
     }
 
-    user_profile {
-        bigint id
-        string user_id
-        string user_name
-        string country_region_code
-        string certificate_type
-        string certificate_number_hash
-        string certificate_number_ciphertext
-        string phone_country_code
-        string phone_number
-        string email
-        string status
+    class UserProfile {
+        +userId
+        +userName
+        +countryRegionCode
+        +certificateType
+        +certificateNumberHash
+        +phoneCountryCode
+        +phoneNumber
+        +email
+        +status
     }
 
-    user_account {
-        bigint id
-        string user_id
-        string account_id
-        string account_name
-        string display_name
-        string password_hash
-        string identity_id
-        string status
+    class UserAccount {
+        +accountId
+        +accountName
+        +displayName
+        +identityId
+        +status
+        +passwordHash
     }
 
-    authenticate_identity {
-        bigint id
-        string identity_id
-        string account_id
-        string provider_code
-        string provider_subject
-        string provider_login
-        string provider_email
-        json profile_json
+    class AuthenticateIdentity {
+        +identityId
+        +providerCode
+        +providerSubject
+        +providerLogin
+        +providerEmail
+        +profileJson
     }
 
-    authenticate_session {
-        bigint id
-        string session_id
-        string account_id
-        string provider_code
-        string client
-        string refresh_token_hash
-        string status
-        datetime expires_at
+    class PendingLoginTicket {
+        +ticketId
+        +providerCode
+        +providerSubject
+        +providerLogin
+        +providerEmail
+        +requestedClient
+        +status
+        +expiresAt
     }
 
-    authenticate_client {
-        bigint id
-        string client_code
-        string client_name
-        string client_type
-        boolean enabled
+    class AuthenticateSession {
+        +sessionId
+        +userId
+        +accountId
+        +providerCode
+        +client
+        +status
+        +expiresAt
+        +revokeReason
     }
 
-    authenticate_provider {
-        bigint id
-        string provider_code
-        boolean enabled
-        boolean visible
-        int display_order
-        string desktop_mode
-        string mobile_mode
+    class AuthenticateClient {
+        +clientCode
+        +clientName
+        +clientType
+        +enabled
     }
 
-    authorize_role {
-        bigint id
-        string rold_code
-        string role_name
+    class AuthenticateProvider {
+        +providerCode
+        +enabled
+        +visible
+        +displayOrder
+        +desktopMode
+        +mobileMode
     }
 
-    authorize_permission {
-        bigint id
-        string permission_code
-        string permission_name
+    class AuthorizeRole {
+        +roldCode
+        +roleName
     }
 
-    authorize_role_permission {
-        bigint id
-        string rold_code
-        string permission_code
+    class AuthorizePermission {
+        +permissionCode
+        +permissionName
     }
 
-    user_role {
-        bigint id
-        string user_id
-        string rold_code
+    class UserRole {
+        +userId
+        +roldCode
     }
+
+    class AuthorizeRolePermission {
+        +roldCode
+        +permissionCode
+    }
+
+    SystemCountry "1" --> "0..*" UserProfile : classifies
+    UserProfile "1" --> "0..*" UserAccount : owns
+    UserAccount "1" --> "0..*" AuthenticateIdentity : binds
+    UserProfile "1" --> "0..*" AuthenticateSession : owns
+    UserAccount "1" --> "0..*" AuthenticateSession : authenticates
+    AuthenticateProvider "1" --> "0..*" PendingLoginTicket : stages
+    AuthenticateClient "1" --> "0..*" AuthenticateSession : originates
+    AuthenticateProvider "1" --> "0..*" AuthenticateIdentity : defines
+    AuthorizeRole "1" --> "0..*" UserRole : grants
+    AuthorizeRole "1" --> "0..*" AuthorizeRolePermission : contains
+    AuthorizePermission "1" --> "0..*" AuthorizeRolePermission : maps
 ```
 
 ## 10. 分阶段实施建议
@@ -590,8 +634,10 @@ erDiagram
 ### 10.2 第二阶段：登录链路切换
 
 - 本地账号登录切到 `账号 -> 用户` 解析模型
-- 第三方登录新增“创建或关联用户”分支
-- 会话接口补齐 `user_id` 级别的可观测信息
+- 第三方登录新增“创建或关联用户”显式分支
+- 引入 `PendingLoginStore` 作为首次第三方登录待决策票据统一入口，当前使用内存实现，后续可平滑替换为 Redis
+- 会话接口补齐 `user_id` 级别的可观测信息，并把互踢维度提升到 `user_id`
+- 登录成功后的默认落点切到 `User Center`
 
 ### 10.3 第三阶段：用户中心绑定能力
 
@@ -619,8 +665,9 @@ erDiagram
 - 一个用户可拥有多个账号，一个账号可绑定多个认证身份。
 - 用户唯一识别基线是“国家/地区 + 证件类型 + 证件号码”，而不是邮箱或手机号。
 - 第三方首次登录不得自动按邮箱并户，必须走“关联已有用户或新建用户”的显式流程。
+- 第三方首次登录在身份未命中时，不得自动创建正式账号和正式身份，必须先进入显式决策流程。
 - 用户中心后续需要承担账号绑定与解绑能力。
-- 登录页仍只负责输入登录信息或发起第三方登录；没有回调地址时，Session 页面是兜底结果页。
+- 登录页仍只负责输入登录信息或发起第三方登录；没有回调地址时，默认进入 `User Center`，`Sessions` 作为并级辅助页。
 - Session 页面必须展示认证提供方与发起客户端。
 - 每种登录方式的启用状态与页面显隐，都由数据库配置控制，当前阶段直接改数据库，不先做管理界面。
 - 所有业务关联不得依赖内部 `id`，统一使用 `user_id`、`account_id`、`identity_id`、`session_id`、`client_code`、`provider_code`、`rold_code`、`permission_code`。
