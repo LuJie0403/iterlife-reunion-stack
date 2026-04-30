@@ -53,7 +53,7 @@ webhook/              webhook 服务源码与示例环境文件
 - 文件名统一使用 `app_optional_doctype_topic.md`，统一使用下划线 `_` 作为分隔符。
 - 文档日期信息不再进入文件名；每份文档在正文开头显式记录“创建日期”和“最后更新”。
 - 数据库变更不再通过 Flyway 等运行时迁移框架管理；业务应用仓库不保留自动改库链路。
-- 业务系统数据库变更脚本保留在对应业务仓的 `database/` 目录，不再统一存放在 `iterlife-stack`。
+- 业务系统数据库结构以各自生产库现状为基准，不再统一在仓库中长期保留人工执行 SQL。
 - 功能相同或相近的文档必须合并，避免 API/UI 各写一份近似说明。
 - 只有在内容确实无法合并时，才通过应用子目录和应用名前缀区分，例如 `docs/reunion/reunion_design_overview.md`、`docs/expenses/expenses_design_overview.md`。
 - 应用文档优先收敛为少量“概览型”事实源，不恢复仓库内 `README`、`deploy`、`archive`、`ui-governance` 等平行文档集合。
@@ -174,7 +174,7 @@ python3 -m py_compile webhook/iterlife-deploy-webhook-server.py
 - 目录结构或治理规则变化：更新本文档。
 - 版本号或发布基线变化：更新 `operations_deployment_baseline.md`。
 - 部署链路、Secrets、服务器路径、接入模板、回滚与巡检规则变化：更新 `operations_deployment_baseline.md`。
-- 数据库结构或数据库初始化规则变化：在对应业务仓的 `database/` 新增独立 SQL 文件，并同步更新 `operations_deployment_baseline.md` 和相关应用设计文档。
+- 数据库结构或数据库初始化规则变化：以目标业务仓当前生产库现状为基准评估执行方案，并同步更新 `operations_deployment_baseline.md` 和相关应用设计文档。
 - 共享包边界、发布或接入方式变化：更新 `design_frontend_packages.md`。
 - 身份体系、会话模型、IDaaS 拆分变化：更新 `idaas/idaas_design_identity.md`。
 - 应用结构或核心产品方向变化：更新对应的应用概览文档。

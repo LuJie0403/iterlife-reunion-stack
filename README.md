@@ -40,13 +40,13 @@ webhook/              webhook 服务源码与示例 env
 - 同一主题只保留一个事实源。
 - 文档正文开头统一维护“创建日期”和“最后更新”。
 - 文件名统一使用下划线 `_`。
-- 业务系统数据库变更脚本保留在对应业务仓的 `database/` 目录，不再统一收口在控制面仓。
+- 业务系统数据库结构以各自生产库现状为基准，不再统一在仓库中长期保留人工执行 SQL。
 - 任何涉及正式运行规则的变更，都必须同步更新对应正式文档。
 
 ## 当前 IDaaS 文档基线
 
 - 控制面仓唯一正式设计文档： [docs/idaas/idaas_design_identity.md](./docs/idaas/idaas_design_identity.md)
-- 后端最终迁移脚本：`iterlife-idaas/database/20260427_01_account_auth_baseline.sql`
+- 数据库基线说明： [docs/idaas/idaas_db_change_execution.md](./docs/idaas/idaas_db_change_execution.md)
 
 ## 运行约束
 
