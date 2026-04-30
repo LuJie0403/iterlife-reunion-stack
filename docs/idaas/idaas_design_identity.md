@@ -7,7 +7,7 @@
 
 适用范围：`iterlife-idaas`、`iterlife-idaas-ui`、`iterlife-reunion`、`iterlife-expenses`
 
-数据库统一执行说明见：[idaas_db_change_execution.md](/Users/iter_1024/repository/iterlife-stack/docs/idaas/idaas_db_change_execution.md:1)
+数据库基线说明见：[idaas_db_change_execution.md](/Users/iter_1024/repository/iterlife-stack/docs/idaas/idaas_db_change_execution.md:1)
 
 ## 1. 系统定位
 
@@ -164,9 +164,7 @@
 - 前端用户中心直接展示已关联第三方账号
 - 前端会话页只操作当前账号及当前端会话
 
-数据库最终迁移脚本已从控制面仓移出，当前正式脚本位于：
-
-- `iterlife-idaas/database/20260427_01_account_auth_baseline.sql`
+数据库结构以当前生产库现状为基准，本地仓库不再保留 IDaaS 人工执行 SQL。
 
 ## 7. 跨系统接入基线
 
@@ -502,9 +500,7 @@ WHERE provider_code = 'apple';
 
 #### 第一步：初始化或重置 provider 基线
 
-执行：
-
-- `iterlife-idaas/database/20260429_01_provider_visibility_baseline.sql`
+执行时按当前生产库现状单独评估，不再依赖仓库内固定 SQL 文件。
 
 执行结果应为：
 
@@ -528,11 +524,7 @@ WHERE provider_code = 'apple';
 
 #### 第三步：开启 provider
 
-执行：
-
-- `iterlife-idaas/database/20260429_02_provider_go_live.sql`
-
-按其中的单平台 SQL 逐个开启，不允许三家一次性全开。
+按单个平台逐个开启，不允许三家一次性全开。
 
 ### 13.4 推荐上线顺序
 
